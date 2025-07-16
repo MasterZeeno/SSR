@@ -77,7 +77,10 @@ install_pkgs() {
   }
 
   for pkg in "${pkgs[@]}" xlsx2csv; do
-    local retry=0; until command -v "$pkg" &>/dev/null; do
+    local retry=0 pkgq="$pkg"
+    [[ "$pkg" =~ pip ]] && pkgq='pip3'
+    
+    until command -v "$pkgq" &>/dev/null; do
       ((retry++>MAX_RETRY)) && {
         abort "Failed to install '$pkg'" \
           'Please check internet connection'
