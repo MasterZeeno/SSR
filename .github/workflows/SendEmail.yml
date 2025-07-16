@@ -1,4 +1,4 @@
-name: Update
+name: Send Email
 
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -7,11 +7,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  update_fancy:
+  send_email:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run update script
+      - name: Run script
         shell: bash
         run: |
           chmod +x SSR.sh
