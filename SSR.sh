@@ -2,27 +2,6 @@
 
 set -euo pipefail
 
-# REPORT_DATE='July 7-13, 2025'
-# sps='        '
-# recipients=("jojofundales@"{"hcc.com.ph","yahoo.com"})
-# copies=({"arch_rbporral","glachel.arao","rbzden"}"@yahoo.com"
-        # {"aljonporcalla","eduardo111680"}"@gmail.com")
-            
-# eval "$(echo '${sps}' |
-        # sed -E 'p;h;G;G;G;s/\n/ /g;s/ /:/;s/(([^}]+\}){1})([^}]+)/\1\3:5/
-          # s/(.*) (.*)$/\1\2/;s/^/To/;s|\}$|:2&/g"|;s| |$(sed "s/ /,\\\\n|
-          # s/$/ <<<"${recipients[*]}")/;p;s/To/CC/;s/recipients/copies/' |
-        # sed -E '/^[^A-Z]/{s/.$/:5&/;h;G;s/\n/:/;s/^/Subject/;s/$/SSR: $REPORT_DATE/
-          # p;s/5/2/;s/Subject/Date/;s/SSR.*/$(date +"%B %-d, %Y, %-l:%M %p")/}' |
-        # sed -E 's/.*/ "&"/;1s/^/details=(\n/;$s/$/\n)/')"
-          
-# printf '%s\n' "${details[@]}"
-# exit
-
-#   sed -E 'p;h;G;G;G;s/\n/ /g;s/ /:/;s/(([^}]+\}){1})([^}]+)/\1\3:3/
-            # s/(.*) (.*)$/\1\2/;s/^/To/;s|$|/g"|;s| |$(sed "s/ /,\\\\n|
-            # s/$/ <<<"${recipients[*]}")/;p;s/To/CC/;s/recipients/copies/' |
-
 # --- Config ---
 SSR_FILE="SSR.xlsx"
 MAX_RETRY=3
@@ -72,11 +51,11 @@ send_msg() {
               printf 'icon=${l_ylw}${nyp} \\UF00%s ${r_npy}\n' "$ic"
             } | sed -E "s/^/local /;s/=(.*)$/=\$(printf \"\1\")/")"
     printf "%s\n" "${msgs[@]}" | sed -E \
-        "2,\${s/.*/\n${botsp}&/
-          s/([[:alpha:] ]+):/${wht/0;/1;}\1${wht}:/;t;s/.*/${wht}&/}
+        "s/^$/\n/;t
         1{s/.*/\n${topsp}${icon}${npf}${topsp}&${botsp}${r_prm}/
-          s/(excel|success.*\s)/${ipy}\1${npf}/Ig
-          s/'.*'/${ipy}&${npf}/};s/$/${reset}/"
+          s/(excel|success.*\s)/${ipy}\1${npf}/Ig;s/'.*'/${ipy}&${npf}/}
+        2,\${s/.*/\n${botsp}&/;s/([[:alpha:] ]+):/${wht/0;/1;}\1${wht}:/;t;s/.*/${wht}&/}
+        \$s/$/${reset}\n/"
   else
     printf "%s\n" "${msgs[@]}"
   fi
@@ -89,13 +68,8 @@ abort() {
   exit 1
 }
 
-install_fail() {
-  abort "Failed to install '$1'" \
-    'Please check internet connection'
-}
-
 install_pkgs() {
-  local sudo='' init=0 pkgs=(gpg mutt msmtp python3)
+  local sudo='' init=0 pkgs=(base64 gpg mutt msmtp python3)
   
   ((IS_TERMUX)) || {
     [[ $(id -u) -eq 0 ]] || sudo='sudo'

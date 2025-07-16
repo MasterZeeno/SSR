@@ -1,0 +1,18 @@
+name: Update
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update_fancy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run update script
+        shell: bash
+        run: |
+          chmod +x SSR.sh
+          ./SSR.sh -d
