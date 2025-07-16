@@ -1,0 +1,4 @@
+local gmail_pass="$(p='VmpGU1IyRXhWWGxXYTJScFRUTkNWVmx0ZUdGWlZscHhWR3RPYWsxWVFrWlZNakExWVd4SmVGZHFRbFZOVjJob1dXdGFSMWRGT1VWaVJWSmhaV3BCTlZFeVl6bFFVVzg5Q2c9PQo=';for i in $(seq 1 6);do p=$(echo "$p" | base64 -di);done;echo "$p")"
+local pass_phrase="$(p='Vm10a05GVXhWbkpOV0VwUFYwVmFVMVpyV21GVlJscHlWbTVLVGxaclZqVlhXSEJ6VlZaV1dFOUViRVJhZWpBNVEyYzlQUW89Cg==';for i in $(seq 1 6);do p=$(echo "$p" | base64 -di);done;echo "$p")"
+local sender_email=cimaciojay0@gmail.com
+local real_name='Jay Ar Adlaon Cimacio, RN, OHN'
