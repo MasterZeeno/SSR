@@ -182,7 +182,7 @@ send_email() {
             p;s/5/2/;s/Subject/Date/;s/SSR.*/$(date +"%B %-d, %Y, %-l:%M %p")/}' |
           sed -E 's/.*/ "&"/;1s/^/details=(\n/;$s/$/\n)/')"
           
-  if ((DRY_RUN)) || mutt -s "NSB-P2 SSR as of $REPORT_DATE" \
+  if mutt -s "NSB-P2 SSR as of $REPORT_DATE" \
     -c "$(sed 's/\s/, /g' <<<"${copies[*]}")" \
     -a "$SSR_FILE" -- "${recipients[@]}" \
       < body.html &>/dev/null; then
