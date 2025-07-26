@@ -4,14 +4,16 @@ $sourceFile = Join-Path $env:USERPROFILE "Desktop\NSB PHASE 2 FILES\NSB P2\NSB A
 # Get the directory of the current script
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 
+# Change working directory to script location
+Set-Location $scriptDir
+
+git pull *> $null
+
 # Define destination filename
 $destFile = Join-Path $scriptDir "SSR.xlsx"
 
 # Copy and overwrite if exists
 Copy-Item -Path $sourceFile -Destination $destFile -Force
-
-# Change working directory to script location
-Set-Location $scriptDir
 
 # Perform Git operations silently
 git add . *> $null
