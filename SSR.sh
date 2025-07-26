@@ -68,8 +68,24 @@ abort() {
   exit 1
 }
 
+pkg_exists() {
+  local pkg="$1"
+  { case "$pkg" in
+      openpyxl)
+        python3 -m pip show "$pkg" ;;
+      *)
+        [[ "$pkg" =~ pip$ ]] && pkg='pip3'
+        command -v "$pkg" ;;
+    esac
+  } &>/dev/null
+}
+
 install_pkgs() {
-  local sudo='' init=0 pkgs=(base64 gpg mutt msmtp python3)
+  local sudo='' init=0
+  local -a pkgs=(
+    base64 gpg mutt
+    msmtp python3
+  )
   
   ((IS_TERMUX)) || {
     [[ $(id -u) -eq 0 ]] || sudo='sudo'
@@ -77,10 +93,8 @@ install_pkgs() {
   }
 
   for pkg in "${pkgs[@]}" openpyxl; do
-    local retry=0 pkgq="$pkg"
-    [[ "$pkg" =~ pip ]] && pkgq='pip3'
-    
-    until command -v "$pkgq" &>/dev/null; do
+    local retry=0
+    until pkg_exists "$pkg"; do
       ((retry++>MAX_RETRY)) && {
         abort "Failed to install '$pkg'" \
           'Please check internet connection'
@@ -96,7 +110,8 @@ install_pkgs() {
           *) $sudo env DEBIAN_FRONTEND=noninteractive \
              apt-get install -yq --no-install-recommends "$pkg" ;;
         esac
-      } &>/dev/null || sleep 1; done
+      } &>/dev/null || sleep 1
+    done
   done
   
   local pypath="$(python3 -m site --user-base)/bin"
