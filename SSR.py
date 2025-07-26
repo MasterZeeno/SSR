@@ -17,8 +17,15 @@ try:
         sys.exit(1)
     ws = visible_sheets[-1]
     report_date = ws['Q56'].value
-    data = [[cell for i, cell in enumerate(row) if i != 1] for row in ws['P58:T67']]
-    data[0][0] = report_date
+    data = []
+    for r in range(58, 68):
+        row = []
+        for c in range(16, 21):
+            if c != 17:
+                row.append(ws.cell(r,c).value)
+        data.append(row)
+    data[0][0] = f"As of {report_date}"
+    wb.close()
     if report_date is None:
         sys.exit(1)
 except Exception:
@@ -33,8 +40,8 @@ def format_cell(cell):
 # Generate HTML table rows with alignment classes
 table_rows = ""
 table_attrs = """width="100%" cellspacing="0" cellpadding="0" border="0"""
-font_defaults = "font-family:Helvetica,system-ui,sans-serif !important;color:#0061ba !important"
-default_styles = "border:0.016em solid #0061ba !important;padding:0.5em !important"
+font_defaults = "font-family:Helvetica,system-ui,sans-serif;color:#0061ba;text-align:left;word-spacing:normal;letter-spacing:normal"
+default_styles = "border:0.0123em solid #0061ba;padding:0.5em"
 for i, row in enumerate(data):
     tag = "th" if i == 0 else "td"
     row_html = "<tr>"
@@ -51,30 +58,28 @@ for i, row in enumerate(data):
 
 # Full HTML document
 html_content = f"""<div style="background:0 0;margin:0;padding:0;border:0 none transparent;outline:0 none transparent;width:100%;height:auto;box-sizing:border-box">
-  <table {table_attrs}" style="font-size:16px !important;max-width:537px !important;min-width:280px !important;width:96.69% !important;box-sizing:border-box">
+  <table {table_attrs}" style="font-size:16px;max-width:532px;min-width:300px;width:96.69%;box-sizing:border-box">
     <tbody>
       <tr>
         <td align="left">
-          <table {table_attrs}" style="{font_defaults};font-size:clamp(.5em,2.353vw + .059em,1em) !important;line-height:clamp(.4em,6.588vw + -.835em,1.8em) !important;padding:0 clamp(1.125em,3.882vw + .397em,1.95em) 0 !important;text-align:left;word-spacing:normal;letter-spacing:normal;box-sizing:border-box">
+          <table {table_attrs}" style="{font_defaults};font-size:clamp(.5em,2.353vw + .059em,1em);line-height:clamp(.4em,6.588vw + -.835em,1.8em);padding:0 clamp(1.125em,3.882vw + .397em,1.95em) 0;box-sizing:border-box">
             <tbody>
               <tr>
                 <td>
                   <div style="margin:clamp(1.125em,3.882vw + .397em,1.95em) auto 0;font-size:0.96em;box-sizing:border-box">
                     <h3>Good day, everyone!</h3>
-                    <p>
-                      Please see the attached updated <b>Safety Statistics Report (SSR)</b>
-                      <br>
-                      for the <b>Construction of the New Senate Building Project&nbsp;&ndash;&nbsp;P2.</b>
+                    <p>Please find the attached updated <b>Safety Statistics Report (SSR)</b>
+                      for Project Code: <b>PE-01-NSBP2-23&nbsp;&ndash;&nbsp;Construction of the New Senate Building (Phase II).</b>
                     </p>
                     <p>
-                      Also, kindly review the brief summary in the table below:
+                      Alternatively, for your convenience, a brief summary is provided in the table below:
                     </p>
-                    <table {table_attrs}" style="border-collapse:collapse;width:100%;{font_defaults};font-size:0.96em;box-sizing:border-box">
+                    <table {table_attrs}" style="border-collapse:collapse;width:100%;{font_defaults};font-size:0.9em;box-sizing:border-box">
                         {table_rows}
                     </table>
                     <p>
                       <br>
-                      Thank you&nbsp;&mdash;&nbsp;<i>and as always,</i><b>Safety First!</b> 👊
+                      Thank you, and as always&mdash;<b>Safety First!</b>&nbsp;👊
                     </p>
                   </div>
                 </td>

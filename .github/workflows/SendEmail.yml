@@ -3,7 +3,7 @@ name: Send Email
 on:
   workflow_dispatch:
   schedule:
-    - cron: '59 15 * * 0'
+    - cron: '0 22 * * 0'  # Runs every Monday 6:00 AM (Asia/Manila, UTC+8)
     
 jobs:
   send_email:
