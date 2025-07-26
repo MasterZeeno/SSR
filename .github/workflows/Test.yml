@@ -1,0 +1,16 @@
+name: Test Send Email
+
+on:
+  workflow_dispatch:
+    
+jobs:
+  test_send_email:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dry-run script
+        shell: bash
+        run: |
+          chmod +x SSR.sh
+          ./SSR.sh -d
+      - uses: stefanzweifel/git-auto-commit-action@v6.0.1
