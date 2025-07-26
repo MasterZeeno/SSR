@@ -66,6 +66,10 @@ try {
     Log "Failed to copy file: $_" "ERROR"
 }
 
+$pythonScriptPath = Join-Path $scriptDir "SSR.py"
+
+python $pythonScriptPath
+
 # Git add
 Log "Running git add..."
 git add . *> $null
