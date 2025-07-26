@@ -216,12 +216,12 @@ done
 install_pkgs
 
 # --- Extract value ---
-if ((DRY_RUN)); then
-  REPORT_DATE='July 7-13, 2025'
-else
+# if ((DRY_RUN)); then
+#   REPORT_DATE='July 7-13, 2025'
+# else
   REPORT_DATE=$(xlsx2csv -a --exclude_hidden_sheets "$SSR_FILE" | grep -Eo '^[-]+.*' | tail -n1 | cut -d ' ' -f4- |
                 perl -pe 's/\b(\w+)\s+(\d+)-\1\s+(\d+),/$1 $2-$3,/;s/\b(\w)/\u$1/g' | sed -E 's/\s+$//')
-fi
+# fi
 
 grep -q "$REPORT_DATE" SENT_REPORTS && NOT_REPORTED=0
 ((DRY_RUN+NOT_REPORTED)) && send_email
