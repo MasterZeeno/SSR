@@ -76,7 +76,7 @@ install_pkgs() {
     pkgs+=(python3-pip)
   }
 
-  for pkg in "${pkgs[@]}" xlsx2csv; do
+  for pkg in "${pkgs[@]}" openpyxl; do
     local retry=0 pkgq="$pkg"
     [[ "$pkg" =~ pip ]] && pkgq='pip3'
     
@@ -92,7 +92,7 @@ install_pkgs() {
       }
       
       { case "$pkg" in
-          xlsx2csv) $sudo pip3 install -q "$pkg" ;;
+          openpyxl) $sudo pip3 install -q "$pkg" ;;
           *) $sudo env DEBIAN_FRONTEND=noninteractive \
              apt-get install -yq --no-install-recommends "$pkg" ;;
         esac
@@ -216,12 +216,6 @@ done
 install_pkgs
 
 # --- Extract value ---
-if ((DRY_RUN)); then
-  REPORT_DATE='July 7-13, 2025'
-else
-  REPORT_DATE=$(xlsx2csv -a --exclude_hidden_sheets "$SSR_FILE" | grep -Eo '^[-]+.*' | tail -n1 | cut -d ' ' -f4- |
-                perl -pe 's/\b(\w+)\s+(\d+)-\1\s+(\d+),/$1 $2-$3,/;s/\b(\w)/\u$1/g' | sed -E 's/\s+$//')
-fi
-
+REPORT_DATE=$(python3 SSR.py "$SSR_FILE") || exit 1
 grep -q "$REPORT_DATE" SENT_REPORTS && NOT_REPORTED=0
 ((DRY_RUN+NOT_REPORTED)) && send_email
