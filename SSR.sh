@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # --- Config ---
-SSR_FILE="SSR.xlsx"
+SSR_FILE="NSB-P2 SSR.xlsx"
 MAX_RETRY=3
 IS_TERMUX=1
 NOT_REPORTED=1

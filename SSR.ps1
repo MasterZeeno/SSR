@@ -56,7 +56,7 @@ if ($LASTEXITCODE -eq 0) {
 }
 
 # Define destination filename
-$destFile = Join-Path $scriptDir "SSR.xlsx"
+$destFile = Join-Path $scriptDir "NSB-P2 SSR.xlsx"
 
 # Copy and overwrite if exists
 try {
