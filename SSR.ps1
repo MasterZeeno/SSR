@@ -66,9 +66,12 @@ try {
     Log "Failed to copy file: $_" "ERROR"
 }
 
-$pythonScriptPath = Join-Path $scriptDir "SSR.py"
+$module = "openpyxl"
+$installed = python -c "import importlib.util; print(importlib.util.find_spec('$module') is not None)"
 
-python $pythonScriptPath
+if ($installed -eq "False") {
+    python -m pip install $module *> $null
+}
 
 # Git add
 Log "Running git add..."

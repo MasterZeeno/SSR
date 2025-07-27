@@ -1,53 +1,36 @@
-import xlwings as xw
-import os
+from openpyxl import load_workbook
 import sys
-import re
+import os
 
-def format_sheet_name(name: str) -> str:
-    # Normalize repeated month range: "july 21-july 27, 2025" → "july 21-27, 2025"
-    name = re.sub(r'\b(\w+)\s+(\d+)-\1\s+(\d+),', r'\1 \2-\3,', name, flags=re.IGNORECASE)
+if len(sys.argv) < 2:
+    sys.exit(1)
 
-    # Capitalize each word (like \u$1)
-    name = re.sub(r'\b\w', lambda m: m.group().upper(), name)
+path = sys.argv[1]
 
-    return name
-
-# Path to your Excel file
-file_path = r'D:\Scripts\NEW\SSR\NSB-P2 SSR.xlsx'
-
-# Exit if the file doesn't exist
-if not os.path.exists(file_path):
-    print(f"Error: File does not exist -> {file_path}")
+if not os.path.exists(path):
     sys.exit(1)
 
 try:
-    with xw.App(visible=False) as app:
-        wb = app.books.open(file_path)
-
-        # Filter only visible sheets
-        visible_sheets = [sheet for sheet in wb.sheets if sheet.visible]
-
-        # Check for visible sheets
-        if not visible_sheets:
-            print("Error: No visible sheets found.")
-            wb.close()
-            sys.exit(1)
-
-        last_visible_sheet = visible_sheets[-1]
-        last_visible_sheet_name = format_sheet_name(last_visible_sheet.name)
-
-        # Attempt to read the range
-        data = last_visible_sheet.range('P58:T67').value
-        wb.close()
-
-except Exception as e:
-    print(f"An error occurred: {e}")
+    wb = load_workbook(path, read_only=True, data_only=True)
+    visible_sheets = [sheet for sheet in wb.worksheets if sheet.sheet_state == 'visible']
+    if not visible_sheets:
+        sys.exit(1)
+    ws = visible_sheets[-1]
+    report_date = ws['Q56'].value
+    data = []
+    for r in range(58, 68):
+        row = []
+        for c in range(16, 21):
+            if c != 17:
+                row.append(ws.cell(r,c).value)
+        data.append(row)
+    data[0][0] = f"As of {report_date}"
+    wb.close()
+    if report_date is None:
+        sys.exit(1)
+except Exception:
     sys.exit(1)
-
-# Remove the second column (index 1) from each row
-cleaned_data = [[cell for i, cell in enumerate(row) if i != 1] for row in data]
-cleaned_data[0][0] = last_visible_sheet_name
-
+    
 # Format cell content
 def format_cell(cell):
     if isinstance(cell, (int, float)):
@@ -56,8 +39,10 @@ def format_cell(cell):
 
 # Generate HTML table rows with alignment classes
 table_rows = ""
-default_styles = "border:0.016em solid #0061ba !important;padding:0.5em !important"
-for i, row in enumerate(cleaned_data):
+table_attrs = """width="100%" cellspacing="0" cellpadding="0" border="0"""
+font_defaults = "font-family:Helvetica,system-ui,sans-serif;color:#0061ba;text-align:left;word-spacing:normal;letter-spacing:normal"
+default_styles = "border:0.0123em solid #0061ba;padding:0.5em"
+for i, row in enumerate(data):
     tag = "th" if i == 0 else "td"
     row_html = "<tr>"
     for j, cell in enumerate(row):
@@ -73,30 +58,28 @@ for i, row in enumerate(cleaned_data):
 
 # Full HTML document
 html_content = f"""<div style="background:0 0;margin:0;padding:0;border:0 none transparent;outline:0 none transparent;width:100%;height:auto;box-sizing:border-box">
-  <table width="100%" cellspacing="0" cellpadding="0" style="font-size:16px !important;max-width:537px !important;min-width:280px !important;width:96.69% !important;box-sizing:border-box">
+  <table {table_attrs}" style="font-size:16px;max-width:532px;min-width:300px;width:96.69%;box-sizing:border-box">
     <tbody>
       <tr>
         <td align="left">
-          <table width="100%" cellspacing="0" cellpadding="0" border="0" style="font-family:Helvetica,system-ui,sans-serif;font-size:clamp(.5em,2.353vw + .059em,1em)!important;line-height:clamp(.4em,6.588vw + -.835em,1.8em)!important;padding:0 clamp(1.125em,3.882vw + .397em,1.95em) 0!important;color:#0061ba!important;text-align:left;word-spacing:normal;letter-spacing:normal;box-sizing:border-box">
+          <table {table_attrs}" style="{font_defaults};font-size:clamp(.5em,2.353vw + .059em,1em);line-height:clamp(.4em,6.588vw + -.835em,1.8em);padding:0 clamp(1.125em,3.882vw + .397em,1.95em) 0;box-sizing:border-box">
             <tbody>
               <tr>
                 <td>
                   <div style="margin:clamp(1.125em,3.882vw + .397em,1.95em) auto 0;font-size:0.96em;box-sizing:border-box">
                     <h3>Good day, everyone!</h3>
-                    <p>
-                      Please see the attached updated <b>Safety Statistics Report (SSR)</b>
-                      <br>
-                      for the <b>Construction of the New Senate Building Project&nbsp;&ndash;&nbsp;P2.</b>
+                    <p>Please find the attached updated <b>Safety Statistics Report (SSR)</b>
+                      for Project Code: <b>PE-01-NSBP2-23&nbsp;&ndash;&nbsp;Construction of the New Senate Building (Phase II).</b>
                     </p>
                     <p>
-                      Also, kindly review the brief summary in the table below:
+                      Alternatively, for your convenience, a brief summary is provided in the table below:
                     </p>
-                    <table style="border-collapse:collapse;width:100%;font-family:Helvetica,system-ui,sans-serif;font-size:0.96em;color:#0061ba!important;box-sizing:border-box">
+                    <table {table_attrs}" style="border-collapse:collapse;width:100%;{font_defaults};font-size:0.9em;box-sizing:border-box">
                         {table_rows}
                     </table>
                     <p>
                       <br>
-                      Thank you&nbsp;&mdash;&nbsp;<i>and as always,</i><b>Safety First!</b> 👊
+                      Thank you, and as always&mdash;<b>Safety First!</b>&nbsp;👊
                     </p>
                   </div>
                 </td>
@@ -126,3 +109,5 @@ html_content = f"""<div style="background:0 0;margin:0;padding:0;border:0 none t
 output_path = "body.html"
 with open(output_path, "w", encoding="utf-8") as f:
     f.write(html_content)
+
+print(report_date)
