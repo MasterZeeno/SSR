@@ -35,7 +35,7 @@ send_msg() {
       ;;
   esac
   
-  local -a msgs=("$@")
+  local -a msgs=("$@" '')
   (($#)) || return
   local topsp=$(spacer 2) botsp=$(spacer 4)
   if [[ -t 1 ]]; then

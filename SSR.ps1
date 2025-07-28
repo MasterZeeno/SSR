@@ -66,12 +66,12 @@ try {
     Log "Failed to copy file: $_" "ERROR"
 }
 
-$module = "openpyxl"
-$installed = python -c "import importlib.util; print(importlib.util.find_spec('$module') is not None)"
+# $module = "openpyxl"
+# $installed = python -c "import importlib.util; print(importlib.util.find_spec('$module') is not None)"
 
-if ($installed -eq "False") {
-    python -m pip install $module *> $null
-}
+# if ($installed -eq "False") {
+    # python -m pip install $module *> $null
+# }
 
 # Git add
 Log "Running git add..."
