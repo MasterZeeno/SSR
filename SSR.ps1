@@ -1,16 +1,50 @@
-# Get the directory of the current script
-$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
+param (
+    [Parameter(Position=0)]
+    [string]$sourceFile
+)
 
-# Log file paths
-$logFile = Join-Path $scriptDir "script.log"
-
-# Define max log size (1MB)
-$maxSizeBytes = 1MB
-
-# Define log retention period (in days)
+# === Configuration ===
+$scriptDir        = Split-Path -Parent $PSCommandPath
+$logFile          = Join-Path $scriptDir "script.log"
+$destFile         = Join-Path $scriptDir "NSB-P2 SSR.xlsx"
+$push_ssr         = "FALSE"
+$maxSizeBytes     = 1MB
 $logRetentionDays = 3
 
-# Rotate log if it's too big
+# === Fallback for sourceFile ===
+if (-not $sourceFile) {
+    $sourceFile = Join-Path $env:USERPROFILE "Desktop\NSB PHASE 2 FILES\NSB P2\NSB All files\SSR NSB P2 NEW.xlsx"
+}
+
+# === Logging ===
+function Log {
+    param (
+        [string]$message,
+        [ValidateSet("INFO", "WARN", "ERROR")]
+        [string]$level = "INFO"
+    )
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $logLine = "[$timestamp] [$level] $message"
+    Add-Content -Path $logFile -Value $logLine
+}
+
+# === Validate source file ===
+function Validate-SourceFile {
+    param ([string]$path)
+
+    if (-not (Test-Path $path)) {
+        Log "Source file does not exist: `"$path`"" "ERROR"
+        exit 1
+    }
+
+    $ext = [IO.Path]::GetExtension($path)
+    if ($ext -ne ".xlsx") {
+        Log "Invalid file extension: '$ext'. Only .xlsx files are allowed." "ERROR"
+        exit 1
+    }
+}
+
+# === Log rotation ===
 if (Test-Path $logFile) {
     $logSize = (Get-Item $logFile).Length
     if ($logSize -ge $maxSizeBytes) {
@@ -20,77 +54,82 @@ if (Test-Path $logFile) {
     }
 }
 
-# Delete old logs (older than 3 days)
+# === Log cleanup ===
 Get-ChildItem -Path $scriptDir -Filter "script_*.log" |
     Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-$logRetentionDays) } |
-    ForEach-Object {
-        Remove-Item $_.FullName -Force
-    }
+    Remove-Item -Force
 
-# Define logger function
-function Log {
-    param (
-        [string]$message,
-        [string]$level = "INFO"
-    )
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    $logLine = "[$timestamp] [$level] $message"
-    Write-Output $logLine
-    Add-Content -Path $logFile -Value $logLine
-}
+# === Begin execution ===
+Validate-SourceFile -path $sourceFile
 
-# Build dynamic source file path
-$sourceFile = Join-Path $env:USERPROFILE "Desktop\NSB PHASE 2 FILES\NSB P2\NSB All files\SSR NSB P2 NEW.xlsx"
-
-# Change working directory to script location
 Set-Location $scriptDir
 Log "Changed working directory to $scriptDir"
 
-# Pull latest changes
+# Git pull
 Log "Running git pull..."
-git pull *> $null
+git pull 2>&1 | ForEach-Object { Log $_ }
 if ($LASTEXITCODE -eq 0) {
     Log "git pull completed successfully."
 } else {
     Log "git pull failed." "ERROR"
 }
 
-# Define destination filename
-$destFile = Join-Path $scriptDir "NSB-P2 SSR.xlsx"
-
-# Copy and overwrite if exists
+# Copy file
 try {
     Copy-Item -Path $sourceFile -Destination $destFile -Force
-    Log "Copied $sourceFile to $destFile"
+    Log "Copied `"$sourceFile`" to `"$destFile`""
+    $push_ssr = "TRUE"
 } catch {
     Log "Failed to copy file: $_" "ERROR"
 }
 
-# $module = "openpyxl"
-# $installed = python -c "import importlib.util; print(importlib.util.find_spec('$module') is not None)"
+[Environment]::SetEnvironmentVariable("PUSH_SSR", $push_ssr, "User")
 
-# if ($installed -eq "False") {
-    # python -m pip install $module *> $null
-# }
+$jobName = "SSR_AutoPush"
 
-# Git add
-Log "Running git add..."
-git add . *> $null
-
-# Git commit
-Log "Running git commit..."
-git commit -m "Updated!" *> $null
-if ($LASTEXITCODE -eq 0) {
-    Log "git commit successful."
-} else {
-    Log "Nothing to commit or commit failed." "WARN"
+# Remove existing job with the same name if it exists
+if (Get-Job -Name $jobName -ErrorAction SilentlyContinue) {
+    Remove-Job -Name $jobName -Force
 }
 
-# Git push
-Log "Running git push..."
-git push *> $null
-if ($LASTEXITCODE -eq 0) {
-    Log "git push successful."
-} else {
-    Log "git push failed." "ERROR"
+# Start a background job that loops every 30 seconds
+Start-Job -Name $jobName -ScriptBlock {
+    function HasInternet {
+        try {
+            $null = Invoke-RestMethod -Uri "https://www.google.com" -TimeoutSec 3
+            return $true
+        } catch {
+            return $false
+        }
+    }
+
+    function GitHasChanges {
+        $status = git status --porcelain
+        return -not [string]::IsNullOrWhiteSpace($status)
+    }
+
+    while ($true) {
+        $envVal = $env:PUSH_SSR
+
+        if ($envVal -eq "TRUE") {
+            if (GitHasChanges) {
+                if (HasInternet) {
+                    try {
+                        git add . 2>&1
+                        git commit -m "Auto-commit by background service" --no-verify 2>&1
+                        git push 2>&1
+                        [Environment]::SetEnvironmentVariable("PUSH_SSR", "FALSE", "User")
+                    } catch {
+                        Start-Sleep -Seconds 5
+                    }
+                }
+            } else {
+                [Environment]::SetEnvironmentVariable("PUSH_SSR", "FALSE", "User")
+            }
+        } else {
+            break
+        }
+
+        Start-Sleep -Seconds 30
+    }
 }
