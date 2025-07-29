@@ -145,6 +145,8 @@ NEW_IMG_PATH = "resized_image.png"
 WB_BASENAME = "NSB-P2 SSR - TEMPLATE"
 SOURCE_FILE = f"{WB_BASENAME}.xlsx"
 
+# 0.67, 8.14, 7.71, 15, 10.43, 12.29, 12.29, 12.29, 12.29, 12.29, 12.29, 5.14, 2, 0.67
+
 # Check if Excel file exists
 if not os.path.exists(SOURCE_FILE):
     print(f"Error: File not found - {SOURCE_FILE}")
