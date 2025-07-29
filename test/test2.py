@@ -142,7 +142,7 @@ from openpyxl.drawing.image import Image
 # Constants
 IMG_PATH = "hcclogo.png"
 NEW_IMG_PATH = "resized_image.png"
-WB_BASENAME = "NSB-P2 SSR - TOP - TEMPLATE"
+WB_BASENAME = "NSB-P2 SSR - TEMPLATE"
 SOURCE_FILE = f"{WB_BASENAME}.xlsx"
 
 # Check if Excel file exists
@@ -167,8 +167,8 @@ def points_to_pixels(points):
 ws._images.clear()
 
 # Get row height in pixels
-row_height = ws.row_dimensions[1].height
-new_height = points_to_pixels(row_height) if row_height else points_to_pixels(15)  # fallback
+row_height = int((ws.row_dimensions[1].height) * 0.85)
+new_height = points_to_pixels(row_height) if row_height else points_to_pixels(15)
 
 # Resize the image to match row height
 with PILImage.open(IMG_PATH) as img:
