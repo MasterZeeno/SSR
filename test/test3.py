@@ -1,326 +1,426 @@
 import os
 import sys
+import platform
+from datetime import datetime
 from PIL import Image as PILImage
 from openpyxl import load_workbook, Workbook
 from openpyxl.drawing.image import Image
-from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side, numbers
 from openpyxl.utils import get_column_letter, column_index_from_string
 from openpyxl.utils.exceptions import InvalidFileException
 
+def set_wb(path, read_only=True, data_only=True):
+    if not path.lower().endswith('.xlsx'):
+        path += '.xlsx'
+    if not os.path.isfile(path):
+        sys.exit(f"File not found — {path}")
+    try:
+        return load_workbook(path, read_only=read_only, data_only=data_only)
+    except (InvalidFileException, OSError) as e:
+        sys.exit(f"Unable to load workbook — {e}")
+
+# Constants
 REPORT_TITLE = "SAFETY STATISTICS REPORT"
 PROJECT_INFO = {
-    "Name": [10, "Construction of the New Senate Building (Phase II)"],
-    "Site": [11, "Navy village, Fort Bonifacio, Taguig City"],
-    "Code": [12, "PE-01-NSBP2-23"]
+    "Date Range": None,
+    "Name": "Construction of the New Senate Building (Phase II)",
+    "Site": "Navy village, Fort Bonifacio, Taguig City",
+    "Code": "PE-01-NSBP2-23"
 }
-
-START_ROW = 15
+START_ROW = 6
 ADDNL_ROW = 53
 BASE_WIDTH_PTS = 69
-SHEET_DIMENS = {
- "A": 0.67, "B": 8.14, "C": 7.71, "D": 15, "E": 10.43,
- "F": 12.29, "G": 12.29, "H": 12.29, "I": 12.29, "J": 12.29,
- "K": 12.29, "L": 5.14, "M": 2, "N": 0.67
-}
+
+# Dimensions for columns A to N
+# Columns F–K share the same width: 12.29
+SHEET_DIMENS = dict(zip(
+    [chr(i) for i in range(ord('A'), ord('N') + 1)],
+    [0.67, 8, 7.71, 15.14, 10.43, *[12.29] * 6, 5.14, 2, 0.67]
+))
 
 FG = "002445"
 FG_LIGHT = "00386C"
-BG = "93CBFF"
+BG = "CEE7FF"
 BG_LIGHT = "E2F1FF"
+BG_LIGHTER = "F5FAFF"
 
 SOURCE_FILE = "NSB-P2 SSR"
-TEMPLATE_FILE = f"{SOURCE_FILE} - TEMPLATE"
-
 IMG_PATH = "hcclogo.png"
-NEW_IMG_PATH = f"resized-{IMG_PATH}"
+NEW_IMG_PATH = "resized.png"
 
+wb = set_wb(SOURCE_FILE)
+visible_sheets = [s for s in wb.worksheets if s.sheet_state == 'visible']
+if not visible_sheets:
+    sys.exit("No visible sheets found.")
+ws = visible_sheets[-1]
+
+# Workbook prep
 temp_wb = Workbook()
 temp_ws = temp_wb.active
 
-
+# Helper functions
 def points_to_pixels(points):
     return int(points * 96 / 72)
+
+def to_datetime(value=None):
+    date_format = "%b-%-d" if platform.system() != "Windows" else "%b-%#d"
+    if isinstance(value, datetime):
+        return value.strftime(date_format)
+    try:
+        parsed = datetime.fromisoformat(str(value))
+        return parsed.strftime(date_format)
+    except (ValueError, TypeError):
+        return str(value)
 
 def to_str(value=None, fallback=''):
     return str(value) if value is not None else fallback
 
-def to_int(value, fallback=0):
+def to_int(value=None, fallback=0):
+    if not to_str(value).strip():
+        return fallback
+        
     try:
         return int(value)
     except (ValueError, TypeError):
         return fallback
 
-def set_wb(path, read_only=True, data_only=True):
-    if not path.lower().endswith('.xlsx'):
-        path += '.xlsx'
-        
-    if not os.path.isfile(path):
-        print(f"Error: File not found — {path}")
-        sys.exit(1)
-
-    try:
-        wb = load_workbook(filename=path, read_only=read_only, data_only=data_only)
-        return wb
-    except (InvalidFileException, OSError) as e:
-        print(f"Error: Unable to load workbook — {e}")
-        sys.exit(1)
-
 def borderArray(border=None):
     thin = Side(border_style="thin", color=FG_LIGHT)
-
-    if border == 'all':
-        return Border(top=thin, right=thin, bottom=thin, left=thin)
-    elif border == 'top':
-        return Border(top=thin)
-    elif border == 'right':
-        return Border(right=thin)
-    elif border == 'bottom':
-        return Border(bottom=thin)
-    elif border == 'left':
-        return Border(left=thin)
-    elif border == 'top_bottom':
-        return Border(top=thin, bottom=thin)
-    elif border == 'left_right':
-        return Border(left=thin, right=thin)
-    else:
-        return Border()
+    border_map = {
+        'all': Border(top=thin, right=thin, bottom=thin, left=thin),
+        'top': Border(top=thin),
+        'right': Border(right=thin),
+        'bottom': Border(bottom=thin),
+        'left': Border(left=thin),
+        'top_bottom': Border(top=thin, bottom=thin),
+        'left_right': Border(left=thin, right=thin)
+    }
+    return border_map.get(border, Border())
 
 def resolve_column_letter(column=None, fallback=None):
-    if not isinstance(fallback, str):
-        fallback = None
-
-    if not column:
+    if isinstance(column, int) and 1 <= column <= 255:
+        return get_column_letter(column)
+    try:
+        column = str(column).strip().upper()
+        if column.isdigit():
+            return get_column_letter(int(column))
+        return column
+    except Exception:
         return fallback or column
 
-    try:
-        if isinstance(column, int):
-            if 1 <= column <= 255:
-                return get_column_letter(column)
-        else:
-            column = str(column).strip().upper()
-            if column.isdigit():
-                col_int = int(column)
-                if 1 <= col_int <= 255:
-                    return get_column_letter(col_int)
-    except Exception:
-        pass
-
-    return fallback or column
-
 def resolve_column_integer(column=None, fallback=None):
-    if not isinstance(fallback, int):
-        fallback = None
-
-    if column is None:
-        return fallback
-
-    if isinstance(column, int):
-        return column if 1 <= column <= 254 else fallback
-
-    column_str = str(column).strip().upper()
-    if not column_str:
-        return fallback
-
+    if isinstance(column, int) and 1 <= column <= 254:
+        return column
     try:
-        return column_index_from_string(column_str)
+        return column_index_from_string(str(column).strip().upper())
     except Exception:
         return fallback
-
 
 def FORMAT_CELL(
-  worksheet=temp_ws,
-  start_row=0,
-  start_column='B',
-  end_row=0,
-  end_column=None,
-  value=None,
-  font_size=12,
-  bold=True,
-  italic=False,
-  horizontal_align="center",
-  vertical_align="center",
-  border='all',
-  foreground=FG,
-  background=None
-  ):
+    worksheet=temp_ws,
+    start_row=0,
+    start_column='B',
+    end_row=0,
+    end_column=None,
+    value=None,
+    font_size=12,
+    bold=True,
+    italic=False,
+    horizontal_align="center",
+    vertical_align="center",
+    border='all',
+    foreground=FG,
+    background=None,
+    number_format=None
+):
     start_row = to_int(start_row)
     if start_row < 1:
-        return
-        
+        return None
+    
     end_row = to_int(end_row)
     if end_row < start_row:
         end_row = start_row
         
     start_column = resolve_column_letter(start_column)
     end_column = resolve_column_letter(end_column)
-        
-    if end_column:
-        worksheet.merge_cells(
-          start_row=start_row,
-          start_column=start_column,
-          end_row=end_row,
-          end_column=end_column
-        )
-        # worksheet.merge_cells(range_string=f"{start_column}{start_row}:{end_column}{end_row}")
-        
-    cell = worksheet.cell(start_row, column_index_from_string(start_column))
-    
-    if value:
-        if horizontal_align != "center":
-            value = f"  {value}"
-        cell.value = value
-        cell.font = Font(color=FG, bold=bold, italic=italic, name='Arial', size=font_size)
-    
+
+    if end_column and end_column != 'NONE':
+        worksheet.merge_cells(range_string=f"{start_column}{start_row}:{end_column}{end_row}")
+    else:
+        end_column = start_column
+
+    cell = worksheet.cell(start_row, resolve_column_integer(start_column))
+
+    cellValue = value
+    if horizontal_align != "center":
+        if horizontal_align == "right":
+            cellValue = f"{value}  "
+        else:
+            cellValue = f"  {value}"
+                
+    cell.value = cellValue
+    cell.font = Font(
+        color=foreground, bold=bold, italic=italic,
+        name='Arial', size=font_size
+    )
+    cell.number_format = number_format if number_format else "General"
     if background:
-        if background == 'light':
-            fgColor = BG_LIGHT
-        else:
-            fgColor = BG
+        fill_color = {
+            'light': BG_LIGHT,
+            'lighter': BG_LIGHTER
+        }.get(background, BG)
+        cell.fill = PatternFill(
+            fill_type="solid",
+            fgColor=fill_color
+        )
+    
+    cell.alignment = Alignment(
+        horizontal=horizontal_align,
+        vertical=vertical_align,
+        indent=2
+    )
+    
+    borderStyle = borderArray(border)
+    if borderStyle:
+        for row in worksheet.iter_rows(
+            min_row=start_row, max_row=end_row,
+            min_col=resolve_column_integer(start_column),
+            max_col=resolve_column_integer(end_column)
+        ):
+            for cell in row:
+                cell.border = borderStyle
+
+def retrieve_value(start_row=0, start_column='B', end_row=0, end_column=None, dataType='str', ws=ws):
+    start_row = to_int(start_row)
+    if start_row < 1:
+        return None
+    start_row += ADDNL_ROW
+
+    end_row = to_int(end_row)
+    end_row = end_row + ADDNL_ROW if end_row >= 1 else start_row
+
+    if end_row < start_row:
+        end_row = start_row
+
+    start_column = resolve_column_integer(start_column)
+    end_column = resolve_column_integer(end_column) if end_column else start_column
+
+    if end_column < start_column:
+        end_column = start_column
+
+    try:
+        values = []
+        for row in ws.iter_rows(
+            min_row=start_row, max_row=end_row,
+            min_col=start_column, max_col=end_column
+        ):
+            for cell in row:
+                prefVal = {
+                    'int': to_int(cell.value),
+                    'datetime': to_datetime(cell.value)
+                }.get(dataType, to_str(cell.value))
+                values.append(prefVal)
             
-        cell.fill = PatternFill(fill_type="solid", fgColor=fgColor)
-    
-    cell.border = borderArray(border)
-    cell.alignment = Alignment(horizontal=horizontal_align, vertical=vertical_align)
+        return values if len(values) > 1 else values[0] if values else None
+    except Exception:
+        return None
 
-wb = set_wb(SOURCE_FILE)
-visible_sheets = [sheet for sheet in wb.worksheets if sheet.sheet_state == 'visible']
+REPORT_DATE = retrieve_value(3, 'Q')
+PREV_SUM_TBL = retrieve_value(6, 'R', 14, 'T', ws=visible_sheets[-2])
 
-if not visible_sheets:
-    print("No visible sheets found.")
-    sys.exit(1)
-
-ws = visible_sheets[-1]
-
-report_date = ws[f"Q{ADDNL_ROW + 3}"].value
-ref_code = ws[f"B{ADDNL_ROW + 8}"].value
-date_range = ws[f"D{ADDNL_ROW + 10}"].value
-
-DEST_FILE = f"{SOURCE_FILE} as of {report_date}.xlsx"
-
-MANPOWER_LIST = {}
-
-start = False
-for r in range(69, ws.max_row + 1):
-    value = to_str(ws.cell(r, 3).value).strip().upper()
-
-    if start:
-        if 'TOTAL' not in value:
-            if value:
-                data = []
-                for c in range(5, 12):
-                    data.append(to_int(ws.cell(r, c).value))
-                    
-                MANPOWER_LIST[value] = data
-        else:
-            break
-
-    if 'DATE' in value:
-        start = True
-
-wb.close()
-del wb
-
-# temp_wb = set_wb(TEMPLATE_FILE, False, False)
-# temp_ws = temp_wb.active
-# temp_ws.title = f"As of {report_date}"
-
-temp_ws.title = f"As of {report_date}"
-
-# Apply column widths
-for col, wid in SHEET_DIMENS.items():
-    temp_ws.column_dimensions[col].width = wid
-    
-# Clear existing images
+# Sheet setup
+temp_ws.title = f"As of {REPORT_DATE}"
+for col, width in SHEET_DIMENS.items():
+    temp_ws.column_dimensions[col].width = width
 temp_ws._images.clear()
 
-# Get image height in pixels
+# Handle logo resizing
 IMG_HEIGHT = points_to_pixels(int(BASE_WIDTH_PTS * 0.69))
-
 with PILImage.open(IMG_PATH) as img:
-    ASPECT_RATIO = img.height / img.width
-    IMG_WIDTH = int(IMG_HEIGHT / ASPECT_RATIO)
+    IMG_WIDTH = int(IMG_HEIGHT / (img.height / img.width))
     img = img.resize((IMG_WIDTH, IMG_HEIGHT))
     img.save(NEW_IMG_PATH)
 
-# Insert image into cell F1
-img = Image(NEW_IMG_PATH)
-img.anchor = 'F1'
-temp_ws.add_image(img)
+temp_ws.add_image(Image(NEW_IMG_PATH), "F1")
+
+REF_CODE = retrieve_value(8, 'B')
+PROJECT_INFO["Date Range"] = retrieve_value(10, 'D')
+WEEK_DATA = {f"DA{k}S": retrieve_value(r,'E',r,'K',dataType='datetime') for k, r in {'Y': 18, 'TE': 19}.items()}
+DEST_FILE = f"{SOURCE_FILE} as of {REPORT_DATE}.xlsx"
+
+def sort_after_key(d, pivot_key, priority_key="EMD"):
+    found = False
+    before = {}
+    after = {}
+
+    for k, v in d.items():
+        if found:
+            after[k] = v
+        else:
+            before[k] = v
+            if k == pivot_key:
+                found = True
+
+    # Extract the priority key if it exists in the "after" dict
+    priority_item = {priority_key: after.pop(priority_key)} if priority_key in after else {}
+
+    # Sort the rest
+    after_sorted = dict(sorted(after.items()))
+
+    # Merge the parts: before, priority_key (if present), and sorted rest
+    return {**before, **priority_item, **after_sorted}
+
+def SET_SHEET_DATA(ws=ws):
+    KEYS = ["REGULAR", "OVERTIME"]
+    blocks = {}
+    current_block = None
+    collecting = False
+    block_data = {}
+
+    for row in range(18, ws.max_row + 1):
+        label = retrieve_value(row, 3).strip().upper()
+        
+        if any(label.startswith(p) for p in KEYS):
+            # Start of a new block
+            if current_block and block_data:
+                blocks[current_block] = sort_after_key(block_data.copy(), "ADMIN")
+            current_block = label.split()[0]  # Use REGULAR / OVERTIME as key
+            block_data = {}
+            collecting = False
+        elif "TOTAL" in label and collecting:
+            # End of current block
+            blocks[current_block] = sort_after_key(block_data.copy(), "ADMIN")
+            current_block = None
+            block_data.clear()
+            collecting = False
+            if all(k in blocks for k in KEYS):
+                break
+        elif collecting and label:
+            # Collect manpower row
+            if "DATE" not in label and label not in block_data:
+                block_data[label] = retrieve_value(
+                    start_row=row,
+                    start_column='E',
+                    end_column='K',
+                    dataType='int'
+                )
+        elif "DATE" in label:
+            collecting = True
     
+    return blocks
+
+SHEET_DATA = SET_SHEET_DATA(ws)
+
+# Title
+start_column, end_column = 'B', 'M'
 FORMAT_CELL(
-  start_row=5, end_row=6,
-  start_column='b', end_column='m',
-  value=REPORT_TITLE, font_size=20
+    start_row=START_ROW, start_column=start_column,
+    end_column=end_column, end_row=START_ROW + 1,
+    value=REPORT_TITLE, font_size=20
 )
 
+START_ROW += 2
 FORMAT_CELL(
-  start_row=7, start_column='b',
-  end_column='m', value=f"{ref_code}  ",
-  font_size=9, italic=True, background=True,
-  horizontal_align='right'
+    start_row=START_ROW, start_column=start_column,
+    end_column=end_column, value=REF_CODE,
+    font_size=9, italic=True, background=True,
+    horizontal_align='right'
 )
 
-PROJECT_INFO["Date Range"] = [9, date_range]
-for key, value in PROJECT_INFO.items():
-    if not "Date" in key:
-        start_column = 'b'
-        end_column = 'c'
-        value = f"Project {key}"
-        border = None
-        bold = False
-    else:
-        start_column = 'd'
-        end_column = 'k'
-        value = value[1]
-        border='bottom'
-        bold = True
-
+# Project info
+START_ROW += 2
+for key, val in PROJECT_INFO.items():
+    is_date = "date" in key.lower()
+    horizontal_align, font_size = 'left', 10
+    
     FORMAT_CELL(
-      start_row=value[0],
-      start_column=start_column, end_column=end_column,
-      value=value, bold=bold, border=border,
-      horizontal_align='left', font_size=10
+        start_row=START_ROW,
+        start_column='B',
+        end_column='C',
+        value=key if is_date else f"Project {key}",
+        bold=False,
+        border=None,
+        font_size=font_size,
+        horizontal_align=horizontal_align
     )
-    
-KEYS_LEN = len(MANPOWER_LIST.keys())
-for CLASS in ("POWER", "HOURS"):
-    ROW_KEY = f"I. MAN{CLASS}"
-    if CLASS == "HOURS":
-        MULTIPLIER = 8
-        ROW_KEY = f"II. MAN{CLASS}"
-        START_ROW += 2
-    else:
-        MULTIPLIER = 1
-    
     FORMAT_CELL(
-      start_row=START_ROW,
-      start_column='b', end_column='n',
-      value=ROW_KEY, horizontal_align='left',
-      border=None, background = "light"
+        start_row=START_ROW,
+        start_column='D',
+        end_column='K',
+        value=val,
+        border='bottom',
+        font_size=font_size,
+        horizontal_align=horizontal_align
+    )
+    START_ROW += 1
+
+# Manpower rows
+SUB_TOTALS = {}
+for C in ("POWER", "HOURS"):
+    CLASS = f"I. MAN{C}"
+    multiplier = 8 if 'H' in C else 1
+    row_label = f"I{CLASS}" if 'H' in C else CLASS
+    START_ROW += 2
+
+    FORMAT_CELL(
+        start_row=START_ROW,
+        start_column='B', end_column='N',
+        value=row_label, horizontal_align='left',
+        border=None, background=True
     )
 
     START_ROW += 1
-    for TYPE in ("REGULAR (8am-5pm)", "OVERTIME (6pm-10pm)"):
+    for key, arr_val in SHEET_DATA.items():
         START_ROW += 1
-        for SUBTYPE in [TYPE, "DATE", *MANPOWER_LIST.keys(), "TOTAL"]:
-            if SUBTYPE in [TYPE, "DATE", "TOTAL"]:
-                is_bold = True
-                horizontal_align = "center"
-                if SUBTYPE == TYPE:
-                    background = True
-                else:
-                    background = "light"
-            else:
-                is_bold = False
-                horizontal_align = "left"
-                background = None
-                
+        if 'H' in C:
+            SUB_TOTALS[key] = f"=SUM(E{START_ROW + len(arr_val.keys()) + 2}:K{START_ROW + len(arr_val.keys()) + 2})"
+        TOTAL_ARRFX = [
+            f"=SUM({chr(i)}{START_ROW + 2}:{chr(i)}{START_ROW + len(arr_val.keys()) + 1})"
+            for i in range(ord('E'), ord('K') + 1)
+        ]
+        TYPE = f"{key} {'(8am-5pm)' if key.startswith('R') else '(6pm-10pm)'}"
+        for key, values in dict(zip(
+            [TYPE, "DATE", *arr_val.keys(), "TOTAL"],
+            [WEEK_DATA['DAYS'], WEEK_DATA['DATES'], *arr_val.values(), TOTAL_ARRFX]
+        )).items():
+            is_heading = key in [TYPE, "DATE", "TOTAL"]
+            background = "light" if key in TYPE else "lighter" if is_heading else None
+            font_size = 10
             FORMAT_CELL(
-              start_row=START_ROW,
-              start_column='c', end_column='d',
-              value=SUBTYPE, bold=is_bold, font_size=10,
-              horizontal_align=horizontal_align, background=background
+                start_row=START_ROW,
+                start_column='C', end_column='D',
+                value=key, bold=is_heading, italic=not is_heading,
+                horizontal_align="center" if is_heading else "left",
+                font_size=font_size, background=background
             )
+            for i, col in enumerate([chr(i) for i in range(ord('E'), ord('K') + 1)]):
+                FORMAT_CELL(
+                    start_row=START_ROW, start_column=col,
+                    bold=is_heading, horizontal_align="center",
+                    font_size=font_size, background=background,
+                    number_format=None if is_heading else "#,##0",
+                    value=values[i] if is_heading else to_int(values[i]) * multiplier
+                )
             START_ROW += 1
-                    
+    
+    if 'H' in C:
+        for key, val in SUB_TOTALS.items():
+            START_ROW += 1
+            FORMAT_CELL(
+                start_row=START_ROW, start_column='C',
+                end_column='D', bold=True, horizontal_align="left",
+                background=True, font_size=11, value=f"TOTAL {key}"
+            )
+            FORMAT_CELL(
+                start_row=START_ROW, start_column='E',
+                end_column='F', bold=True, horizontal_align="center",
+                font_size=11, value=val
+            )
+    
+# Save final workbook
 temp_wb.save(DEST_FILE)
+
+if os.path.exists(NEW_IMG_PATH):
+    os.remove(NEW_IMG_PATH)
+    
+sys.exit(0)
