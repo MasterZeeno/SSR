@@ -26,15 +26,17 @@ INFO = {
     "Code": [10, "PE-01-NSBP2-23"]
 }
 
+SCRIPT_TITLE = "SAFETY STATISTICS REPORT"
 ADDNL_ROW = 53
 FG = "002445"
 FG_LIGHT = "00386C"
-BG = "58AFFF"
-BG_LIGHT = "93CBFF"
-BG_LIGHTEST = "E2F1FF"
+# 58AFFF
+BG = "93CBFF"
+BG_LIGHT = "E2F1FF"
+# BG_LIGHTEST = "E2F1FF"
 
 SOURCE_FILE = "NSB-P2 SSR"
-TOP_TEMPLATE_FILE = f"{SOURCE_FILE} - TOP - TEMPLATE"
+TOP_TEMPLATE_FILE = f"{SOURCE_FILE} - TEMPLATE"
 
 try:
     wb = set_wb(SOURCE_FILE)
@@ -87,7 +89,7 @@ try:
     temp_ws = temp_wb.active
     temp_ws.title = f"As of {report_date}"
     
-    thin = Side(border_style="thin", color=FG)
+    thin = Side(border_style="thin", color=FG_LIGHT)
     
     def borderArray(border):
         if border == 'all':
@@ -115,20 +117,20 @@ try:
         else:
             return str(s).strip().upper()
     
-    def fmt_cell(row=None, max_row=None, sht=temp_ws, sc=2, ec=None, val=None, fz=12, bold=True, italic=False, ha="center", va="center", border='all'):
+    def fmt_cell(row=None, max_row=None, sht=temp_ws, sc=2, ec=None, val=None, fz=12, bold=True, italic=False, ha="center", va="center", border='all', bg=None):
         row = to_int(row)
         if row < 1:
             return
             
-        max_row = to_int(row)
-        if row < 1:
+        max_row = to_int(max_row)
+        if max_row < row:
             max_row = row
             
         sc = res_col(sc)
         ec = res_col(ec)
             
         if ec:
-            sht.merge_cells(f"{sc}{row}:{ec}{max_row}")
+            sht.merge_cells(range_string=f"{sc}{row}:{ec}{max_row}")
             
         cell = sht.cell(row, column_index_from_string(sc))
         
@@ -138,20 +140,29 @@ try:
             cell.value = val
             cell.font = Font(color=FG, bold=bold, italic=italic, name='Arial', size=fz)
         
+        if bg:
+            if bg == 'light':
+                fgColor = BG_LIGHT
+            else:
+                fgColor = BG
+                
+            cell.fill = PatternFill(fill_type="solid", fgColor=fgColor)
+        
         cell.border = borderArray(border)
         cell.alignment = Alignment(horizontal=ha, vertical=va)
         
-    fmt_cell(3, 4, sc='b', ec='m', val="SAFETY STATISTICS REPORT", fz=20)
-    fmt_cell(5, sc='b', ec='m', val=f"{ref_code}  ", fz=9, bold=False, italic=True, ha='right')
+    fmt_cell(3, 4, sc='b', ec='m', val=SCRIPT_TITLE, fz=20)
+    fmt_cell(5, sc='b', ec='m', val=f"{ref_code}  ", fz=9, italic=True, ha='right', bg=True)
     
     INFO["Date Range"] = [7, date_range]
     for key, val in INFO.items():
-        fmt_cell(val[0], sc)
-        fmt_cell(r, sc='d', ec='k', val=val, ha='left', border='bottom')
-        r += 1
+        if not "Date" in key:
+            key = f"Project {key}"
+        fmt_cell(val[0], sc='b', ec='c', bold=False, val=key, ha='left', border=None, fz=10)
+        fmt_cell(val[0], sc='d', ec='k', val=val[1], ha='left', border='bottom', fz=10)
         
     KEYS_LEN = len(MANPOWER_LIST.keys())
-    START_ROW = temp_ws.max_row + 1
+    START_ROW = 13
     for CLASS in ("POWER", "HOURS"):
         ROW_KEY = f"I. MAN{CLASS}"
         if CLASS == "HOURS":
@@ -161,18 +172,24 @@ try:
         else:
             MULTIPLIER = 1
         
-        fmt_cell(START_ROW, sc='b', ec='n', val=ROW_KEY, ha='left', border=None)
+        fmt_cell(START_ROW, sc='b', ec='n', val=ROW_KEY, ha='left', border=None, bg = "light")
         START_ROW += 1
-        for TYPE in ("REGULAR (8-5)", "OVERTIME (6-10)"):
+        for TYPE in ("REGULAR (8am-5pm)", "OVERTIME (6pm-10pm)"):
             START_ROW += 1
             for SUBTYPE in [TYPE, "DATE", *MANPOWER_LIST.keys(), "TOTAL"]:
                 if SUBTYPE in [TYPE, "DATE", "TOTAL"]:
                     is_bold = True
                     ha = "center"
+                    if SUBTYPE == TYPE:
+                        bg = True
+                    else:
+                        bg = "light"
                 else:
                     is_bold = False
                     ha = "left"
-                fmt_cell(START_ROW, sc='c', ec='d', val=SUBTYPE, bold=is_bold, fz=11, ha=ha)
+                    bg = None
+                    
+                fmt_cell(START_ROW, sc='c', ec='d', val=SUBTYPE, bold=is_bold, fz=10, ha=ha, bg=bg)
                 START_ROW += 1
                 
         # for r in range(13, temp_ws.max_row + 1):
