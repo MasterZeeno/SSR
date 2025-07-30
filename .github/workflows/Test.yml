@@ -1,16 +1,21 @@
 name: Test Send Email
 
 on:
+  push:
   workflow_dispatch:
-    
+
 jobs:
   test_send_email:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Dry-run script
+
+      - name: Make script executable
+        run: chmod +x SSR.sh
+
+      - name: Run script with commit message
+        run: ./SSR.sh "${{ github.event.head_commit.message }}"
         shell: bash
-        run: |
-          chmod +x SSR.sh
-          ./SSR.sh -d
-      - uses: stefanzweifel/git-auto-commit-action@v6.0.1
+
+      - name: Auto-commit changes (if any)
+        uses: stefanzweifel/git-auto-commit-action@v6.0.1
