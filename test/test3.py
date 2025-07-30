@@ -228,6 +228,15 @@ def retrieve_value(start_row=0, start_column='B', end_row=0, end_column=None, da
 REPORT_DATE = retrieve_value(3, 'Q')
 PREV_SUM_TBL = retrieve_value(6, 'R', 14, 'T', ws=visible_sheets[-2])
 
+PRES_TBL = {}
+PREV_TBL = {}
+for col in range(resolve_column_integer('R'), resolve_column_integer('T') + 1):
+    key = retrieve_value(5, col).strip().upper()
+    for row in range(6, 15):
+        subkey = retrieve_value(5, 'P').strip().upper()
+    
+    PRES_TBL[key] =
+
 # Sheet setup
 temp_ws.title = f"As of {REPORT_DATE}"
 for col, width in SHEET_DIMENS.items():

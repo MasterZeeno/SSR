@@ -4,8 +4,9 @@
     stroke-linecap="round"
     stroke-linejoin="round"
     shape-rendering="geometricPrecision"
-    width="3100px"
-    height="720px"
+    text-rendering="optimizeLegibility"
+    width="1550px"
+    height="360px"
     viewBox="0 0 155 36">
     <defs>
         <linearGradient
