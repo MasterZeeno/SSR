@@ -1,21 +1,34 @@
 name: Test Send Email
 
 on:
-  push:
   workflow_dispatch:
+  push:
+    branches: [runner]
 
 jobs:
   test_send_email:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    permissions: write-all
+      
+    env:
+      COMMIT_MSG: ${{ github.event.head_commit.message }}
+      COMMIT_AUTHOR: ${{ github.event.head_commit.author.username }}
 
-      - name: Make script executable
-        run: chmod +x SSR.sh
+    steps:
+      - name: Checkout default branch
+        if: ${{ env.COMMIT_MSG != '' && !startsWith(env.COMMIT_AUTHOR, 'github-actions') }}
+        uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Run script with commit message
-        run: ./SSR.sh "${{ github.event.head_commit.message }}"
+        if: ${{ env.COMMIT_MSG != '' && !startsWith(env.COMMIT_AUTHOR, 'github-actions') }}
         shell: bash
+        run: |
+          chmod +x SSR.sh
+          ./SSR.sh "${{ env.COMMIT_MSG }}"
 
       - name: Auto-commit changes (if any)
+        if: ${{ env.COMMIT_MSG != '' && !startsWith(env.COMMIT_AUTHOR, 'github-actions') }}
         uses: stefanzweifel/git-auto-commit-action@v6.0.1
+        
