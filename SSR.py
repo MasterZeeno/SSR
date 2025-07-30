@@ -1,58 +1,68 @@
 from openpyxl import load_workbook
+from openpyxl.utils import get_column_letter as gl
 import sys
 import os
+import re
 
-def toint(value=None):
+def toint(s):
+    s = re.sub(r'\D', '', str(s))
     try:
-        return int(value)
+        return int(s)
     except (ValueError, TypeError):
         return 0
+        
+def format_cell(cell):
+    if isinstance(cell, (int, float)):
+        return f"{cell:,.0f}"
+    return str(cell).strip() if cell is not None else ''
 
 if len(sys.argv) == 2:
     path = sys.argv[1]
 else:
-    path = 'NSB-P2 SSR.xlsx'
+    path = 'NSB-P2 SSR'
 
 if not path.lower().endswith('.xlsx'):
     path += '.xlsx'
 if not os.path.isfile(path):
     sys.exit(f"File not found — {path}")
 
-try:
-    wb = load_workbook(path, read_only=True, data_only=True)
-    shts = [s for s in wb.worksheets if s.sheet_state == 'visible']
-    if not shts:
-        sys.exit(1)
-    bws = shts[-2]
-    ws = shts[-1]
-    prev_manpwr = bws['S66'].value
-    prev_manhrs = bws['T67'].value
-    pres_manpwr = ws['S66'].value
-    highest_manpwr = ws['T66'].value
-    report_date = ws['Q56'].value
-    data = []
-    for r in range(58, 68):
-        row = []
-        for c in range(16, 21):
-            if c != 17:
-                row.append(ws.cell(r,c).value)
-        data.append(row)
-    data[0][0] = report_date
-    data[1][8] = prev_manpwr
-    data[1][9] = prev_manhrs
-    data[3][8] = max(toint(prev_manpwr), toint(pres_manpwr), toint(highest_manpwr))
-    data[3][9] = toint(data[1][9]) + toint(data[2][9])
-    wb.close()
-    if report_date is None:
-        sys.exit(1)
-except Exception:
+wb = load_workbook(path, read_only=True, data_only=True)
+shts = [s for s in wb.worksheets if s.sheet_state == 'visible']
+if not shts:
     sys.exit(1)
-    
-# Format cell content
-def format_cell(cell):
-    if isinstance(cell, (int, float)):
-        return f"{cell:,.0f}"
-    return cell if cell is not None else ''
+bws = shts[-2]
+ws = shts[-1]
+
+prev_manpwr, prev_manhrs, pres_manpwr, pres_manhrs = [
+    toint(sht[coord].value)
+    for sht in (bws, ws)
+    for coord in ('S66', 'T67')
+]
+
+report_date, manpwr_header, manhrs_header, highest_manpwr = [
+    ws[coord].value
+    for coord in ('Q56', 'P66', 'P67', 'T66')
+]
+
+data = []
+for r in range(58, 66):
+    row = []
+    for c in range(16, 21):
+        if c != 17:
+            row.append(ws[f"{gl(c)}{r}"].value)
+    data.append(row)
+wb.close()
+
+data[0][0] = report_date
+data.append([
+    manpwr_header, prev_manpwr, pres_manpwr,
+    max(prev_manpwr, pres_manpwr, highest_manpwr)
+])
+data.append([
+    manhrs_header, prev_manhrs,
+    pres_manhrs - prev_manhrs,
+    pres_manhrs
+])
 
 # Generate HTML table rows with alignment classes
 table_rows = ""
@@ -66,15 +76,16 @@ for i, row in enumerate(data):
     row_html = "<tr>"
     for j, cell in enumerate(row):
         alignment = "center" if (i == 0 and j == 0) else ("left" if j == 0 else "center")
-        # Determine font-style
-        bg = ""
-        italic = ""
+        
         if i == 0:
-            bg = f"background-color:rgba({color},.69);"
-        if i > 0 and j == 0:  # Not header row & first column
-            cell = f"  {cell}"
-            italic = "font-style:italic;"
-        cell_html = f'<{tag} align="{alignment}" style="text-align:{alignment};{default_styles}{italic}{bg}">{format_cell(cell)}</{tag}>'
+            addtnl = f"background-color:rgba({color},.069);"
+        elif i > 0 and j == 0:
+            cell = f"&nbsp;&nbsp;{cell}"
+            addtnl = "font-style:italic;"
+        else:
+            addtnl = ""
+            
+        cell_html = f'<{tag} align="{alignment}" style="text-align:{alignment};{default_styles}{addtnl}">{format_cell(cell)}</{tag}>'
         row_html += cell_html
     row_html += "</tr>"
     table_rows += row_html
@@ -89,7 +100,7 @@ html_content = f"""<div dir="ltr" style="background:0 0;margin:0;padding:0;borde
             <tbody>
               <tr>
                 <td>
-                  <div style="margin:clamp(1.125em,3.882vw + .397em,1.95em) auto 0;font-size:0.96em;box-sizing:border-box">
+                  <div dir="ltr" style="margin:clamp(1.125em,3.882vw + .397em,1.95em) auto 0;font-size:0.96em;box-sizing:border-box">
                     <h3>Good day, everyone!</h3>
                     <p>Please find the attached updated <b>Safety Statistics Report (SSR)</b>
                       for Project Code: <b>PE-01-NSBP2-23&nbsp;&ndash;&nbsp;Construction of the New Senate Building (Phase II).</b>
@@ -109,7 +120,7 @@ html_content = f"""<div dir="ltr" style="background:0 0;margin:0;padding:0;borde
               </tr>
               <tr>
                 <td>
-                  <div style="border:0 none transparent;border-top:.032em dashed rgba({color},.69);width:90%;margin:clamp(1.125em,3.882vw + .397em,1.95em) auto;box-sizing:border-box"></div>
+                  <div style="border:0 none transparent;border-top:.032em dashed rgba({color},.69);width:96%;margin:clamp(1.125em,3.882vw + .397em,1.95em) auto;box-sizing:border-box"></div>
                   <p>Best regards,</p>
                 </td>
               </tr>
@@ -132,5 +143,4 @@ html_content = f"""<div dir="ltr" style="background:0 0;margin:0;padding:0;borde
 output_path = "body.html"
 with open(output_path, "w", encoding="utf-8") as f:
     f.write(html_content)
-
 print(report_date)
