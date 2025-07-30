@@ -8,27 +8,37 @@ on:
 jobs:
   test_send_email:
     runs-on: ubuntu-latest
-    permissions: write-all
-      
+    permissions:
+      contents: write
+
+    defaults:
+      run:
+        shell: bash
+
     env:
       COMMIT_MSG: ${{ github.event.head_commit.message }}
       COMMIT_AUTHOR: ${{ github.event.head_commit.author.username }}
 
     steps:
       - name: Checkout default branch
-        if: ${{ env.COMMIT_MSG != '' && !startsWith(env.COMMIT_AUTHOR, 'github-actions') }}
         uses: actions/checkout@v4
         with:
           ref: main
+          fetch-depth: 0
+
+      - name: Merge changes from runner into main
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git fetch origin runner
+          git merge origin/runner --no-edit || echo "Already up to date"
 
       - name: Run script with commit message
-        if: ${{ env.COMMIT_MSG != '' && !startsWith(env.COMMIT_AUTHOR, 'github-actions') }}
-        shell: bash
+        if: ${{ !startsWith(env.COMMIT_AUTHOR, 'github-actions') }}
         run: |
           chmod +x SSR.sh
           ./SSR.sh "${{ env.COMMIT_MSG }}"
 
       - name: Auto-commit changes (if any)
-        if: ${{ env.COMMIT_MSG != '' && !startsWith(env.COMMIT_AUTHOR, 'github-actions') }}
+        if: ${{ !startsWith(env.COMMIT_AUTHOR, 'github-actions') }}
         uses: stefanzweifel/git-auto-commit-action@v6.0.1
-        
