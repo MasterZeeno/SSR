@@ -1,5 +1,5 @@
 param (
-    [Parameter(Position=0)]
+    [Parameter(Position = 0)]
     [string]$sourceFile
 )
 
@@ -16,7 +16,7 @@ if (-not $sourceFile) {
     $sourceFile = Join-Path $env:USERPROFILE "Desktop\NSB PHASE 2 FILES\NSB P2\NSB All files\SSR NSB P2 NEW.xlsx"
 }
 
-# === Logging ===
+# === Logging Function ===
 function Log {
     param (
         [string]$message,
@@ -50,7 +50,7 @@ if (Test-Path $logFile) {
     if ($logSize -ge $maxSizeBytes) {
         $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
         $archivedLog = Join-Path $scriptDir "script_$timestamp.log"
-        Rename-Item $logFile -NewName $archivedLog
+        Rename-Item -Path $logFile -NewName $archivedLog
     }
 }
 
@@ -67,7 +67,8 @@ Log "Changed working directory to $scriptDir"
 
 # Git pull
 Log "Running git pull..."
-git pull 2>&1 | ForEach-Object { Log $_ }
+$gitPullResult = git pull 2>&1
+$gitPullResult | ForEach-Object { Log $_ }
 if ($LASTEXITCODE -eq 0) {
     Log "git pull completed successfully."
 } else {
@@ -83,16 +84,17 @@ try {
     Log "Failed to copy file: $_" "ERROR"
 }
 
+# Persist PUSH_SSR env var for the job
 [Environment]::SetEnvironmentVariable("PUSH_SSR", $push_ssr, "User")
 
 $jobName = "SSR_AutoPush"
 
-# Remove existing job with the same name if it exists
+# Kill old job if exists
 if (Get-Job -Name $jobName -ErrorAction SilentlyContinue) {
     Remove-Job -Name $jobName -Force
 }
 
-# Start a background job that loops every 30 seconds
+# Start Background Git Job
 Start-Job -Name $jobName -ScriptBlock {
     function HasInternet {
         try {
@@ -109,15 +111,14 @@ Start-Job -Name $jobName -ScriptBlock {
     }
 
     while ($true) {
-        $envVal = $env:PUSH_SSR
-
+        $envVal = [Environment]::GetEnvironmentVariable("PUSH_SSR", "User")
         if ($envVal -eq "TRUE") {
             if (GitHasChanges) {
                 if (HasInternet) {
                     try {
-                        git add . 2>&1
-                        git commit -m "Auto-commit by background service" --no-verify 2>&1
-                        git push 2>&1
+                        git add . 2>&1 | Out-Null
+                        git commit -m "Auto-commit by background service" --no-verify 2>&1 | Out-Null
+                        git push 2>&1 | Out-Null
                         [Environment]::SetEnvironmentVariable("PUSH_SSR", "FALSE", "User")
                     } catch {
                         Start-Sleep -Seconds 5
@@ -129,7 +130,6 @@ Start-Job -Name $jobName -ScriptBlock {
         } else {
             break
         }
-
         Start-Sleep -Seconds 30
     }
 }

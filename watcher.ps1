@@ -1,47 +1,55 @@
-# watcher.ps1 (fully silent, optimized)
+# === watcher.ps1 (Fully Silent, Self-Cleaning, Debounced, Optimized) ===
 
-$scriptDir = Split-Path -Parent $PSCommandPath
+# Get script directory
+$scriptDir   = Split-Path -Parent $PSCommandPath
+$scriptPath  = Join-Path $scriptDir "SSR.ps1"
 
-# Define file to monitor
-$sourceFile = Join-Path $env:USERPROFILE "Desktop\NSB PHASE 2 FILES\NSB P2\NSB All files\SSR NSB P2 NEW.xlsx"
-$folderPath = Split-Path $sourceFile
-$fileName = Split-Path $sourceFile -Leaf
+# Source file to monitor
+$sourceFile  = Join-Path $env:USERPROFILE "Desktop\NSB PHASE 2 FILES\NSB P2\NSB All files\SSR NSB P2 NEW.xlsx"
+$folderPath  = Split-Path $sourceFile
+$fileName    = Split-Path $sourceFile -Leaf
 
-# Setup watcher
-$watcher = [System.IO.FileSystemWatcher]::new()
-$watcher.Path = $folderPath
-$watcher.Filter = $fileName
-$watcher.IncludeSubdirectories = $false
-$watcher.NotifyFilter = [System.IO.NotifyFilters]'LastWrite, FileName'
-
-# Debounce mechanism
+# Debounce config
+$debounceSeconds      = 5
 $global:LastTriggered = $null
-$debounceSeconds = 5
 
-# Handler
+# FileSystemWatcher setup
+$watcher = [System.IO.FileSystemWatcher]::new()
+$watcher.Path                = $folderPath
+$watcher.Filter              = $fileName
+$watcher.IncludeSubdirectories = $false
+$watcher.NotifyFilter        = [System.IO.NotifyFilters]'LastWrite, FileName'
+
+# Define silent action block with debounce
 $action = {
     $now = Get-Date
     if ($global:LastTriggered -and ($now - $global:LastTriggered).TotalSeconds -lt $using:debounceSeconds) {
         return
     }
-
     $global:LastTriggered = $now
-    $scriptPath = Join-Path $using:scriptDir "SSR.ps1"
 
     try {
-        & $scriptPath -sourceFile $using:sourceFile *>$null
-    } finally {
-        # No output, no catch, just silent cleanup if needed
+        & $using:scriptPath -sourceFile $using:sourceFile *> $null
+    } catch {
+        # Silently ignore errors
     }
 }
 
 # Register silent events
-$null = Register-ObjectEvent -InputObject $watcher -EventName Changed -SourceIdentifier FileChanged -Action $action
-$null = Register-ObjectEvent -InputObject $watcher -EventName Created -SourceIdentifier FileCreated -Action $action
-
+Register-ObjectEvent -InputObject $watcher -EventName Changed -SourceIdentifier "Watcher_Changed" -Action $action | Out-Null
+Register-ObjectEvent -InputObject $watcher -EventName Created -SourceIdentifier "Watcher_Created" -Action $action | Out-Null
 $watcher.EnableRaisingEvents = $true
 
-# Prevent terminal output forever
+# Cleanup on exit (Ctrl+C, window close, etc.)
+Register-EngineEvent PowerShell.Exiting -Action {
+    try {
+        Unregister-Event -SourceIdentifier "Watcher_Changed" -ErrorAction SilentlyContinue
+        Unregister-Event -SourceIdentifier "Watcher_Created" -ErrorAction SilentlyContinue
+        $watcher.Dispose()
+    } catch {}
+} | Out-Null
+
+# Infinite silent loop to keep watcher alive
 while ($true) {
     Start-Sleep -Seconds 1
 }
