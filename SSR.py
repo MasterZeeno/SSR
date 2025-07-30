@@ -70,7 +70,7 @@ color = "0,97,186"
 font_family = "-apple-system,system-ui,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue','Fira Sans',Ubuntu,Oxygen,'Oxygen Sans',Cantarell,'Droid Sans','Apple Color Emoji','Segoe UI Emoji','Segoe UI Emoji','Segoe UI Symbol','Lucida Grande',Helvetica,Arial,sans-serif"
 table_attrs = """width="100%" role="presentation" valign="top" border="0" cellspacing="0" cellpadding="0"""
 font_defaults = f"font-family:{font_family};color:rgb({color});text-align:left;word-spacing:normal;letter-spacing:normal"
-default_styles = f"border:0.0123em solid rgb({color});padding:0.5em;"
+default_styles = f"border:0.0123em solid rgb({color});padding:0.23em;"
 for i, row in enumerate(data):
     tag = "th" if i == 0 else "td"
     row_html = "<tr>"
@@ -112,7 +112,6 @@ html_content = f"""<div dir="ltr" style="background:0 0;margin:0;padding:0;borde
                         {table_rows}
                     </table>
                     <p>
-                      <br>
                       Thank you, and as always&mdash;<b>Safety First!</b>&nbsp;👊
                     </p>
                   </div>
