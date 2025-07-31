@@ -15,7 +15,7 @@ try:
             col = 'T' if 'Manhours' in ws.range(f"P{row}").value else 'S'
             ws.range(f"R{row}").value = pws.range(f"{col}{row}").value
             if row < 67:
-                ws.range(f"T{row}").value = max(ws.range(f"R{row}").value, pws.range(f"{col}{row}").value)
+                ws.range(f"T{row}").value = max(ws.range(f"R{row}").value, pws.range(f"{col}{row}").value, pws.range(f"T{row}").value)
     else:
         print("No visible sheets found.")
 
