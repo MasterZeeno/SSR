@@ -34,7 +34,7 @@ jobs:
           git merge origin/runner --no-edit || echo "Already up to date"
 
       - name: Run script with commit message
-        if: ${{ !startsWith(env.COMMIT_AUTHOR, 'github-actions') }}
+        if: ${{ env.COMMIT_MSG != 'Update' && !startsWith(env.COMMIT_AUTHOR, 'github-actions') }}
         run: |
           chmod +x SSR.sh
           ./SSR.sh "${{ env.COMMIT_MSG }}"
