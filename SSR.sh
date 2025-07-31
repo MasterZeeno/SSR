@@ -7,6 +7,7 @@ SSR_FILE="NSB-P2 SSR.xlsx"
 MAX_RETRY=3
 IS_TERMUX=1
 NOT_REPORTED=1
+FORCE=0
 DRY_RUN=0
 INIT=0
 
@@ -215,6 +216,7 @@ send_email() {
 while (($#)); do
   case "${1:-}" in
     *\.xlsx) SSR_FILE="$1" ;;
+    -f|--force) FORCE=1 ;;
     -d|--dry-run) DRY_RUN=1 ;;
     -i|--init) INIT=1 ;;
     *) break ;;
@@ -233,4 +235,4 @@ install_pkgs
 # --- Extract value ---
 REPORT_DATE=$(python3 SSR.py "$SSR_FILE") || exit 1
 grep -q "$REPORT_DATE" SENT_REPORTS && NOT_REPORTED=0
-((DRY_RUN+NOT_REPORTED)) && send_email
+((FORCE+DRY_RUN+NOT_REPORTED)) && send_email
