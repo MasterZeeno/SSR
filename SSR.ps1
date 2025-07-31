@@ -61,11 +61,10 @@ Get-ChildItem -Path $scriptDir -Filter "script_*.log" |
 
 # === Begin execution ===
 Validate-SourceFile -path $sourceFile
-
 Set-Location $scriptDir
 Log "Changed working directory to $scriptDir"
 
-# Git pull
+# === Git pull ===
 Log "Running git pull..."
 $gitPullResult = git pull 2>&1
 $gitPullResult | ForEach-Object { Log $_ }
@@ -75,7 +74,7 @@ if ($LASTEXITCODE -eq 0) {
     Log "git pull failed." "ERROR"
 }
 
-# Copy file
+# === Copy file ===
 try {
     Copy-Item -Path $sourceFile -Destination $destFile -Force
     Log "Copied `"$sourceFile`" to `"$destFile`""
@@ -84,6 +83,8 @@ try {
     exit 1
 }
 
+# === Python/Package Bootstrapping ===
+
 function Is-CommandAvailable($cmd) {
     return (Get-Command $cmd -ErrorAction SilentlyContinue) -ne $null
 }
@@ -91,8 +92,8 @@ function Is-CommandAvailable($cmd) {
 function Install-Choco {
     Log "Installing Chocolatey..."
     Set-ExecutionPolicy Bypass -Scope Process -Force
-    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
-    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    Invoke-Expression ((New-Object Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 }
 
 function Install-Python {
@@ -110,83 +111,47 @@ function Install-Python {
     }
 }
 
-# Step 1: Ensure Python is installed
-if (-not (Is-CommandAvailable "python")) {
-    Install-Python
+# Refresh PATH (important if Python was just installed)
+$env:Path = [Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
+            [Environment]::GetEnvironmentVariable("Path", "User")
+
+# Detect python or python3
+if (Is-CommandAvailable "python") {
+    $pythonCmd = "python"
+} elseif (Is-CommandAvailable "python3") {
+    $pythonCmd = "python3"
 } else {
-    Log "Python is already installed."
+    Install-Python
+    $pythonCmd = "python"
 }
 
-# Step 2: Ensure pip is available
-try {
-    & python -m pip --version > $null
-} catch {
+# Check pip
+if (-not (& $pythonCmd -m pip --version 2>$null)) {
     Log "pip not found. Installing via get-pip.py..."
     Invoke-WebRequest -Uri https://bootstrap.pypa.io/get-pip.py -OutFile get-pip.py
-    python get-pip.py
+    & $pythonCmd get-pip.py
     Remove-Item get-pip.py
 }
 
-# Step 3: Check and install xlwings
-if (-not (python -m pip show xlwings 2>$null)) {
+# Check xlwings
+if (-not (& $pythonCmd -m pip show xlwings 2>$null)) {
     Log "Installing xlwings..."
-    python -m pip install xlwings
+    & $pythonCmd -m pip install xlwings
 } else {
     Log "xlwings is already installed."
 }
 
-python $resolverScript
+# === Run resolver ===
+if (-not (Test-Path $resolverScript)) {
+    Log "resolver.py not found at $resolverScript" "ERROR"
+    exit 1
+}
 
+Log "Running resolver.py..."
+& $pythonCmd $resolverScript
+
+# === Git push ===
 git add . 2>&1 | Out-Null
 git commit -m "Auto-commit by background service" --no-verify 2>&1 | Out-Null
 git push 2>&1 | Out-Null
-
-# Persist PUSH_SSR env var for the job
-# [Environment]::SetEnvironmentVariable("PUSH_SSR", "TRUE", "User")
-
-# $jobName = "SSR_AutoPush"
-
-# # Kill old job if exists
-# if (Get-Job -Name $jobName -ErrorAction SilentlyContinue) {
-#     Remove-Job -Name $jobName -Force
-# }
-
-# # Start Background Git Job
-# Start-Job -Name $jobName -ScriptBlock {
-#     function HasInternet {
-#         try {
-#             $null = Invoke-RestMethod -Uri "https://www.google.com" -TimeoutSec 3
-#             return $true
-#         } catch {
-#             return $false
-#         }
-#     }
-
-#     function GitHasChanges {
-#         $status = git status --porcelain
-#         return -not [string]::IsNullOrWhiteSpace($status)
-#     }
-
-#     while ($true) {
-#         $envVal = [Environment]::GetEnvironmentVariable("PUSH_SSR", "User")
-#         if ($envVal -eq "TRUE") {
-#             if (GitHasChanges) {
-#                 if (HasInternet) {
-#                     try {
-#                         git add . 2>&1 | Out-Null
-#                         git commit -m "Auto-commit by background service" --no-verify 2>&1 | Out-Null
-#                         git push 2>&1 | Out-Null
-#                         [Environment]::SetEnvironmentVariable("PUSH_SSR", "FALSE", "User")
-#                     } catch {
-#                         Start-Sleep -Seconds 5
-#                     }
-#                 }
-#             } else {
-#                 [Environment]::SetEnvironmentVariable("PUSH_SSR", "FALSE", "User")
-#             }
-#         } else {
-#             break
-#         }
-#         Start-Sleep -Seconds 30
-#     }
-# }
+Log "Git auto-push completed."
