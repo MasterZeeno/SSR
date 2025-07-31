@@ -3,6 +3,7 @@ param (
     [string]$sourceFile,
 
     [Parameter(Position = 1)]
+    [Alias("msg")]
     [string]$commitMessage = "Update! Auto-commit by background service"
 )
 
@@ -155,6 +156,6 @@ Log "Running resolver.py..."
 
 # === Git push ===
 git add . 2>&1 | Out-Null
-git commit -m $commitMessage --no-verify 2>&1 | Out-Null
+git commit -m "$commitMessage" --no-verify 2>&1 | Out-Null
 git push 2>&1 | Out-Null
 Log "Git auto-push completed."
