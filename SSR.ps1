@@ -152,6 +152,6 @@ Log "Running resolver.py..."
 
 # === Git push ===
 git add . 2>&1 | Out-Null
-git commit -m "Auto-commit by background service" --no-verify 2>&1 | Out-Null
+git commit -m "Update! Auto-commit by background service" --no-verify 2>&1 | Out-Null
 git push 2>&1 | Out-Null
 Log "Git auto-push completed."
