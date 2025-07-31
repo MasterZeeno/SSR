@@ -9,7 +9,19 @@ jobs:
   send_email:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout default branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Merge changes from runner into main
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git fetch origin runner
+          git merge origin/runner --no-edit || echo "Already up to date"
+          
       - name: Run script
         shell: bash
         run: |

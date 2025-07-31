@@ -5,9 +5,9 @@ param (
 
 # === Configuration ===
 $scriptDir        = Split-Path -Parent $PSCommandPath
+$resolverScript   = Join-Path $scriptDir "resolver.py"
 $logFile          = Join-Path $scriptDir "script.log"
 $destFile         = Join-Path $scriptDir "NSB-P2 SSR.xlsx"
-$push_ssr         = "FALSE"
 $maxSizeBytes     = 1MB
 $logRetentionDays = 3
 
@@ -79,57 +79,114 @@ if ($LASTEXITCODE -eq 0) {
 try {
     Copy-Item -Path $sourceFile -Destination $destFile -Force
     Log "Copied `"$sourceFile`" to `"$destFile`""
-    $push_ssr = "TRUE"
 } catch {
     Log "Failed to copy file: $_" "ERROR"
+    exit 1
 }
+
+function Is-CommandAvailable($cmd) {
+    return (Get-Command $cmd -ErrorAction SilentlyContinue) -ne $null
+}
+
+function Install-Choco {
+    Log "Installing Chocolatey..."
+    Set-ExecutionPolicy Bypass -Scope Process -Force
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+}
+
+function Install-Python {
+    if (Is-CommandAvailable "winget") {
+        Log "Installing Python via winget..."
+        winget install --id Python.Python.3 --source winget -e
+    } elseif (Is-CommandAvailable "choco") {
+        Log "Installing Python via Chocolatey..."
+        choco install -y python
+    } else {
+        Log "No package manager found. Installing Chocolatey..."
+        Install-Choco
+        Log "Installing Python via Chocolatey..."
+        choco install -y python
+    }
+}
+
+# Step 1: Ensure Python is installed
+if (-not (Is-CommandAvailable "python")) {
+    Install-Python
+} else {
+    Log "Python is already installed."
+}
+
+# Step 2: Ensure pip is available
+try {
+    & python -m pip --version > $null
+} catch {
+    Log "pip not found. Installing via get-pip.py..."
+    Invoke-WebRequest -Uri https://bootstrap.pypa.io/get-pip.py -OutFile get-pip.py
+    python get-pip.py
+    Remove-Item get-pip.py
+}
+
+# Step 3: Check and install xlwings
+if (-not (python -m pip show xlwings 2>$null)) {
+    Log "Installing xlwings..."
+    python -m pip install xlwings
+} else {
+    Log "xlwings is already installed."
+}
+
+python $resolverScript
+
+git add . 2>&1 | Out-Null
+git commit -m "Auto-commit by background service" --no-verify 2>&1 | Out-Null
+git push 2>&1 | Out-Null
 
 # Persist PUSH_SSR env var for the job
-[Environment]::SetEnvironmentVariable("PUSH_SSR", $push_ssr, "User")
+# [Environment]::SetEnvironmentVariable("PUSH_SSR", "TRUE", "User")
 
-$jobName = "SSR_AutoPush"
+# $jobName = "SSR_AutoPush"
 
-# Kill old job if exists
-if (Get-Job -Name $jobName -ErrorAction SilentlyContinue) {
-    Remove-Job -Name $jobName -Force
-}
+# # Kill old job if exists
+# if (Get-Job -Name $jobName -ErrorAction SilentlyContinue) {
+#     Remove-Job -Name $jobName -Force
+# }
 
-# Start Background Git Job
-Start-Job -Name $jobName -ScriptBlock {
-    function HasInternet {
-        try {
-            $null = Invoke-RestMethod -Uri "https://www.google.com" -TimeoutSec 3
-            return $true
-        } catch {
-            return $false
-        }
-    }
+# # Start Background Git Job
+# Start-Job -Name $jobName -ScriptBlock {
+#     function HasInternet {
+#         try {
+#             $null = Invoke-RestMethod -Uri "https://www.google.com" -TimeoutSec 3
+#             return $true
+#         } catch {
+#             return $false
+#         }
+#     }
 
-    function GitHasChanges {
-        $status = git status --porcelain
-        return -not [string]::IsNullOrWhiteSpace($status)
-    }
+#     function GitHasChanges {
+#         $status = git status --porcelain
+#         return -not [string]::IsNullOrWhiteSpace($status)
+#     }
 
-    while ($true) {
-        $envVal = [Environment]::GetEnvironmentVariable("PUSH_SSR", "User")
-        if ($envVal -eq "TRUE") {
-            if (GitHasChanges) {
-                if (HasInternet) {
-                    try {
-                        git add . 2>&1 | Out-Null
-                        git commit -m "Auto-commit by background service" --no-verify 2>&1 | Out-Null
-                        git push 2>&1 | Out-Null
-                        [Environment]::SetEnvironmentVariable("PUSH_SSR", "FALSE", "User")
-                    } catch {
-                        Start-Sleep -Seconds 5
-                    }
-                }
-            } else {
-                [Environment]::SetEnvironmentVariable("PUSH_SSR", "FALSE", "User")
-            }
-        } else {
-            break
-        }
-        Start-Sleep -Seconds 30
-    }
-}
+#     while ($true) {
+#         $envVal = [Environment]::GetEnvironmentVariable("PUSH_SSR", "User")
+#         if ($envVal -eq "TRUE") {
+#             if (GitHasChanges) {
+#                 if (HasInternet) {
+#                     try {
+#                         git add . 2>&1 | Out-Null
+#                         git commit -m "Auto-commit by background service" --no-verify 2>&1 | Out-Null
+#                         git push 2>&1 | Out-Null
+#                         [Environment]::SetEnvironmentVariable("PUSH_SSR", "FALSE", "User")
+#                     } catch {
+#                         Start-Sleep -Seconds 5
+#                     }
+#                 }
+#             } else {
+#                 [Environment]::SetEnvironmentVariable("PUSH_SSR", "FALSE", "User")
+#             }
+#         } else {
+#             break
+#         }
+#         Start-Sleep -Seconds 30
+#     }
+# }
