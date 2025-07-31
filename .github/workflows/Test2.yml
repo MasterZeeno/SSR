@@ -1,0 +1,27 @@
+name: Setup Python with xlwings on Windows
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup-python-xlwings:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup Python 3.x
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Install xlwings
+      run: |
+        python -m pip install --upgrade pip
+        pip install xlwings
+    
+    - name: Run tests
+      run: |
+        python test.py
+ 
