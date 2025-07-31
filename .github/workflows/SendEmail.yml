@@ -2,12 +2,24 @@ name: Send Email
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 22 * * 0'  # Runs every Monday 6:00 AM (Asia/Manila, UTC+8)
+  push:
+    branches: [main]
+  # schedule:
+  #   - cron: '0 22 * * 0'  # Runs every Monday 6:00 AM (Asia/Manila, UTC+8)
     
 jobs:
   send_email:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      COMMIT_MSG: ${{ github.event.head_commit.message }}
+
     steps:
       - name: Checkout default branch
         uses: actions/checkout@v4
@@ -23,6 +35,7 @@ jobs:
           git merge origin/runner --no-edit || echo "Already up to date"
           
       - name: Run script
+        if: ${{ !startsWith(env.COMMIT_MSG,'Update') }}
         shell: bash
         run: |
           chmod +x SSR.sh
