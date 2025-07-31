@@ -180,7 +180,7 @@ send_email() {
   local -a recipients copies
   
   if ((DRY_RUN)); then
-    recipients=({"yawapisting7","zeenoliev"}"@gmail.com")
+    recipients=({"yawapisting7","cimaciojay0"}"@gmail.com")
     copies=("${recipients[@]}")
   else
     recipients=("jojofundales@"{"hcc.com.ph","yahoo.com"})
