@@ -5,6 +5,7 @@
     stroke-linejoin="round"
     shape-rendering="geometricPrecision"
     text-rendering="optimizeLegibility"
+    width="310" height="72"
     viewBox="0 0 155 36">
     <defs>
         <linearGradient
