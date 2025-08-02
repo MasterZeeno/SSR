@@ -6,6 +6,8 @@ from email.message import EmailMessage
 from mimetypes import guess_type
 from types import MappingProxyType
 
+from test2 import html_content
+
 class CONST:
     SENSITIVE_KEYWORDS = [
         'pass', 'password', 'passwd', 'pwd',
@@ -172,28 +174,27 @@ CFG = CONST({
 })
 
 MSGS = (
-    'Good day, everyone!',
-    'Please find the attached updated',
-    '<b>Safety Statistics Report (SSR)</b>',
-    'for Project Code:',
-    '<b>PE-01-NSBP2-23</b> —',
-    '<b>Construction of the New Senate Building (Phase II).</b>'
+    'Greetings! ✨',
+    'Please see attached file for the above-mentioned subject.',
+    'For your convenience, a brief summary is also provided in the table below.',
+    'Thank you—and as always, Safety First! 👊'
 )
 ATTACHMENT = 'NSB-P2 SSR.xlsx'
-HTML_BODY = f"""
-<html>
-  <body>
-    <h3>{MSGS[0]}</h3>
-    <p>{' '.join(MSGS[1:])}</p>
-  </body>
-</html>
-"""
+HTML_BODY = html_content
+# HTML_BODY = f"""
+# <html>
+  # <body>
+    # <h3>{MSGS[0]}</h3>
+    # <p>{' '.join(MSGS[1:])}</p>
+  # </body>
+# </html>
+# """
 
 # --- BUILD EMAIL ---
 msg = EmailMessage()
 for k, v in CFG.items():
     msg[k.title()] = v
-msg.set_content(MSGS[0] + '\n' + ' '.join(MSGS[1:]))
+msg.set_content('\n'.join(MSGS))
 msg.add_alternative(HTML_BODY, subtype='html')
 
 # --- ADD ATTACHMENT ---
