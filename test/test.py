@@ -6,7 +6,12 @@ from email.message import EmailMessage
 from mimetypes import guess_type
 from types import MappingProxyType
 
-from test2 import html_content
+from test2 import get_html_content
+
+output_path = "body.html"
+with open(output_path, "w", encoding="utf-8") as f:
+    f.write(get_html_content())
+exit(0)
 
 class CONST:
     SENSITIVE_KEYWORDS = [
