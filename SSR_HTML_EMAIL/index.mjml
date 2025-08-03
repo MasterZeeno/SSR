@@ -1,0 +1,103 @@
+<mjml>
+  <mj-head>
+    <mj-title>Safety Statistics Report</mj-title>
+    <mj-preview>SSR: Safety Summary & Key Stats</mj-preview>
+    <mj-style inline="inline">
+      .fist-bump { font-weight: bold; }
+    </mj-style>
+  </mj-head>
+  <mj-body background-color="#f3f2f0">
+    <mj-wrapper background-color="#ffffff" padding="24px" border-radius="6px">
+      <!-- Header -->
+      <mj-section>
+        <mj-column>
+          <mj-text font-size="20px" color="#0a66c2" font-weight="600">Safety Statistics Report (SSR)</mj-text>
+          <mj-text font-size="15px" color="#60607b">Construction of the New Senate Building (Phase II)</mj-text>
+          <mj-text font-size="14px" color="#60607b">Navy Village, Fort Bonifacio, Taguig City, Philippines</mj-text>
+        </mj-column>
+      </mj-section>
+
+      <!-- Body -->
+      <mj-section>
+        <mj-column>
+          <mj-text font-size="16px" color="#002445">Greetings! ✨</mj-text>
+          <mj-text>Please see the attached file regarding the subject mentioned above. For your convenience, a brief summary is also provided in the table below.</mj-text>
+        </mj-column>
+      </mj-section>
+
+      <!-- Table (raw HTML inside mj-raw) -->
+      <mj-section>
+        <mj-column>
+          <mj-raw>
+            <div style="overflow-x:auto;">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:12px;color:#002445;">
+                <thead>
+                  <tr style="background-color:#f5faff;">
+                    <th style="border:1px solid #002445;">July 21-27, 2025</th>
+                    <th style="border:1px solid #002445;">Previous</th>
+                    <th style="border:1px solid #002445;">This Period</th>
+                    <th style="border:1px solid #002445;">Present</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td style="border:1px solid #002445;">Loss Time Injury</td><td style="text-align:center;border:1px solid #002445;">0</td><td style="text-align:center;border:1px solid #002445;">0</td><td style="text-align:center;border:1px solid #002445;">0</td></tr>
+                  <tr><td style="border:1px solid #002445;">Restricted Work Case</td><td style="text-align:center;border:1px solid #002445;">0</td><td style="text-align:center;border:1px solid #002445;">0</td><td style="text-align:center;border:1px solid #002445;">0</td></tr>
+                  <tr><td style="border:1px solid #002445;">First Aid Treatment Case</td><td style="text-align:center;border:1px solid #002445;">0</td><td style="text-align:center;border:1px solid #002445;">0</td><td style="text-align:center;border:1px solid #002445;">0</td></tr>
+                  <tr><td style="border:1px solid #002445;">Medical Treatment Case</td><td style="text-align:center;border:1px solid #002445;">0</td><td style="text-align:center;border:1px solid #002445;">0</td><td style="text-align:center;border:1px solid #002445;">0</td></tr>
+                  <tr><td style="border:1px solid #002445;">Fire Incident Case</td><td style="text-align:center;border:1px solid #002445;">0</td><td style="text-align:center;border:1px solid #002445;">0</td><td style="text-align:center;border:1px solid #002445;">0</td></tr>
+                  <tr><td style="border:1px solid #002445;">Near Miss Incident</td><td style="text-align:center;border:1px solid #002445;">0</td><td style="text-align:center;border:1px solid #002445;">0</td><td style="text-align:center;border:1px solid #002445;">0</td></tr>
+                  <tr><td style="border:1px solid #002445;">Property Damage Case</td><td style="text-align:center;border:1px solid #002445;">0</td><td style="text-align:center;border:1px solid #002445;">0</td><td style="text-align:center;border:1px solid #002445;">0</td></tr>
+                  <tr><td style="border:1px solid #002445;">Highest Manpower</td><td style="text-align:center;border:1px solid #002445;">394</td><td style="text-align:center;border:1px solid #002445;">346</td><td style="text-align:center;border:1px solid #002445;font-weight:bold;background-color:#f5faff;">412</td></tr>
+                  <tr><td style="border:1px solid #002445;">Cumulative Manhours</td><td style="text-align:center;border:1px solid #002445;">1,222,350</td><td style="text-align:center;border:1px solid #002445;">14,356</td><td style="text-align:center;border:1px solid #002445;font-weight:bold;background-color:#f5faff;">1,236,706</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </mj-raw>
+        </mj-column>
+      </mj-section>
+
+      <!-- Closing -->
+      <mj-section>
+        <mj-column>
+          <mj-text>Thank you&mdash;and as always, <span class="fist-bump">Safety First! 👊</span></mj-text>
+        </mj-column>
+      </mj-section>
+
+      <!-- Signature -->
+      <mj-section>
+        <mj-column width="64px">
+          <mj-image src="https://raw.githubusercontent.com/MasterZeeno/SSR/refs/heads/main/test/cimacio.png" width="64px" border-radius="100%" alt="Jay Ar Adlaon Cimacio, RN"/>
+        </mj-column>
+        <mj-column>
+          <mj-text font-size="16px" font-weight="bold">Jay Ar Adlaon Cimacio, RN</mj-text>
+          <mj-text font-size="14px">Occupational Health Nurse</mj-text>
+          <mj-text font-size="12px" color="#60607b">License No.: 0847170</mj-text>
+        </mj-column>
+      </mj-section>
+
+      <!-- Footer -->
+      <mj-section background-color="#f3f2f0" padding-bottom="0">
+        <mj-column>
+          <mj-text font-size="12px" align="justify">
+            This email, including its attachments and thread, is confidential and intended solely
+            for the designated recipient. Any unauthorized disclosure, reproduction, or use of
+            this message or its content is strictly prohibited. If you have received this message
+            in error or have unauthorized access to it, please notify the sender immediately and
+            delete all copies permanently.
+          </mj-text>
+        </mj-column>
+      </mj-section>
+      <mj-section background-color="#f3f2f0">
+        <mj-column width="123px">
+          <mj-image src="https://raw.githubusercontent.com/MasterZeeno/SSR/refs/heads/main/test/hcclogo.png" width="123px" alt="HCC Logo"/>
+        </mj-column>
+        <mj-column>
+          <mj-text font-size="16px" font-weight="bold">Hilmarc's Construction Corporation</mj-text>
+          <mj-text font-size="10px">1835 E. Rodriguez Sr. Ave., Immaculate Conception, Quezon City, Philippines</mj-text>
+          <mj-text font-size="10px" font-style="italic">ISO 9001:2015 Certified | PCAB License No. 3886 AAA</mj-text>
+          <mj-text font-size="10px">© 1977–2025 Hilmarc's Construction Corporation. All rights reserved.</mj-text>
+        </mj-column>
+      </mj-section>
+    </mj-wrapper>
+  </mj-body>
+</mjml>
