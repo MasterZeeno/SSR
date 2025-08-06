@@ -1,8 +1,0 @@
-linkedin: https://cdn-icons-png.flaticon.com/16/2504/2504923.png 
-facebook: https://cdn-icons-png.flaticon.com/16/2504/2504903.png 
-github:    https://cdn-icons-png.flaticon.com/16/2504/2504911.png
-youtube:    https://cdn-icons-png.flaticon.com/16/2504/2504965.png 
-
-verified:    https://cdn-icons-png.flaticon.com/16/9195/9195920.png
-fist:    https://cdn-icons-png.flaticon.com/16/237/237600.png 
-sparkles: https://cdn-icons-png.flaticon.com/16/2267/2267359.png
