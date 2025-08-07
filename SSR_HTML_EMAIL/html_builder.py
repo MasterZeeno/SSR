@@ -53,8 +53,8 @@ HCC = {
 
 MSGS = [
     "Greetings! ✨",
-    "Please find attached the updated <i>Excel file</i> regarding the subject mentioned above.",
-    "For your quick reference, a brief summary is provided in the table below:",
+    "You may download the updated <i>Excel file</i> using the button above or from the attached copy.",
+    "For your quick reference, a summary of the safety statistics is provided below:",
     "Thank you&mdash;and as always, <b>Safety First! 👊</b>"
 ]
 
