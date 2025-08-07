@@ -43,7 +43,7 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Run Email Script if not an Update commit
-        if: ${{ !startsWith(env.COMMIT_MSG, 'Update') }}
+        if: ${{ !startsWith(env.COMMIT_MSG, 'Update') && !startsWith(env.COMMIT_MSG, 'Merge') }}
         run: |
           cd SSR_HTML_EMAIL || exit 1
           python html_emailer.py "${{ env.COMMIT_MSG }}"
