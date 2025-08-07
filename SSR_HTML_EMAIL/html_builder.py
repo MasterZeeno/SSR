@@ -167,8 +167,8 @@ HTML_BODY = minify(f"""
                     {HEADERS_HTML}
                 </div>
                 {br(2)}
-                <div aria-label="Download file" aria-role="button" {VALIGN};text-align:center;padding:{FONT_SIZE*0.5}px auto;">
-                    <a href="{WB_DOWNLOAD_LINK}" {VALIGN};width:max-content;display:block;text-decoration:none;margin:auto;border-radius:25px;padding:{FONT_SIZE*0.5}px {FONT_SIZE}px;{bold()};font-size:{FONT_SIZE * 0.875};text-align:center;color:#fff;background-color:{FG_LITE};">
+                <div aria-label="Download file" aria-role="button" {VALIGN};padding:{FONT_SIZE*0.5}px auto;">
+                    <a href="{WB_DOWNLOAD_LINK}" {VALIGN};width:max-content;display:block;text-decoration:none;border-radius:{FONT_SIZE*1.5}px;padding:{FONT_SIZE*0.5}px {FONT_SIZE}px;{bold()};font-size:{FONT_SIZE * 0.875};text-align:center;color:#fff;background-color:{FG_LITE};">
                         Download file
                     </a>
                 </div>
