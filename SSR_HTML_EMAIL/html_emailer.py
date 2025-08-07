@@ -198,7 +198,7 @@ CFG = {
     "alias": ["sender", "from"]
 }
 
-if "force" in OPERATION:
+if "force" in OPERATION.lower():
     CFG.update({
         "to": ', '.join([
             estr("jojofundales"),
