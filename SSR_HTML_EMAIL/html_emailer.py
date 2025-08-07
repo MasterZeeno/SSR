@@ -2,6 +2,7 @@ import difflib
 import os
 import re
 import smtplib
+import sys
 import html
 from html.parser import HTMLParser
 from pathlib import Path
@@ -188,20 +189,33 @@ def estr(S=None, T=0):
     return None
     
 # --- CONFIGURATION ---
-CFG = CONST({
+OPERATION = sys.argv[1] if len(sys.argv) > 1 else ""
+
+CFG = {
     "subject": SUBJECT,
     "from": estr('zeenoliev',1),
     "password": "frmoyroohmevbgvb",
-    "alias": ["sender", "from"],
-    "to": ', '.join([
-        estr("jojofundales"),
-        estr("jojofundales",2)
-    ]),
-    "cc": ', '.join([
-        estr(["arch_rbporral","glachel.arao","rbzden"],2),
-        estr(["aljonporcalla","eduardo111680"],1)
-    ])
-})
+    "alias": ["sender", "from"]
+}
+
+if OPERATION == "--force":
+    CFG.update({
+        "to": ', '.join([
+            estr("jojofundales"),
+            estr("jojofundales",2)
+        ]),
+        "cc": ', '.join([
+            estr(["arch_rbporral","glachel.arao","rbzden"],2),
+            estr(["aljonporcalla","eduardo111680"],1)
+        ])
+    })
+else:
+    CFG.update({
+        "to": estr(["yawapisting7", "cimaciojay0"],1),
+        "cc": estr(["rayajcimacio", "rayajcimacio2"],1)
+    })
+
+CFG = CONST(CFG)
 
 # --- BUILD EMAIL ---
 msg = EmailMessage()
