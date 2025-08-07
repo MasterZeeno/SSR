@@ -36,7 +36,9 @@ HEADERS = [
         xcols=[3], direction='col',
     ))
     if (row_data := [
-        smart_title(r).replace('Date Range', 'Report Period')
+        smart_title(r).replace(
+            'Date Range', 'Report Period'
+        )
         for r in row
     ])
 ]

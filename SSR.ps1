@@ -11,7 +11,7 @@ param (
 $scriptDir        = Split-Path -Parent $PSCommandPath
 $resolverScript   = Join-Path $scriptDir "resolver.py"
 $logFile          = Join-Path $scriptDir "script.log"
-$destFile         = Join-Path $scriptDir "NSB-P2 SSR.xlsx"
+$destFile         = Join-Path $scriptDir "PE-01-NSBP2-23 SSR.xlsx"
 $maxSizeBytes     = 1MB
 $logRetentionDays = 3
 

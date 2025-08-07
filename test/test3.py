@@ -231,11 +231,9 @@ PREV_SUM_TBL = retrieve_value(6, 'R', 14, 'T', ws=visible_sheets[-2])
 PRES_TBL = {}
 PREV_TBL = {}
 for col in range(resolve_column_integer('R'), resolve_column_integer('T') + 1):
-    key = retrieve_value(5, col).strip().upper()
     for row in range(6, 15):
-        subkey = retrieve_value(5, 'P').strip().upper()
-    
-    PRES_TBL[key] =
+        key = retrieve_value(5, col)
+        PRES_TBL[key]
 
 # Sheet setup
 temp_ws.title = f"As of {REPORT_DATE}"

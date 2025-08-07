@@ -2,32 +2,35 @@ import difflib
 import os
 import re
 import smtplib
+import html
+from html.parser import HTMLParser
+from pathlib import Path
 from email.message import EmailMessage
 from mimetypes import guess_type
 from types import MappingProxyType
 
-from html_builder import get_html_content
+from html_builder import HTML_BODY, SUBJECT, MSGS
 
-EXCEL_FILE = '../PE-01-NSBP2-23 SSR.xlsx'
+class HTMLStripper(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.fed = []
+
+    def handle_data(self, data):
+        self.fed.append(data)
+
+    def get_data(self):
+        return html.unescape(''.join(self.fed))
+
+def clean(html_text):
+    stripper = HTMLStripper()
+    stripper.feed(html_text)
+    return stripper.get_data()
+
+EXCEL_FILE = (Path(__file__).parent / "../PE-01-NSBP2-23 SSR.xlsx").resolve()
 
 if not os.path.isfile(EXCEL_FILE):
     raise FileNotFoundError(f"File not found — {EXCEL_FILE}")
-
-MSGS = (
-    'Greetings! ✨',
-    'Please see the attached file regarding the subject mentioned above.',
-    'For your convenience, a brief summary is also provided in the table below.',
-    'Thank you&mdash;and as always, ', 'Safety First! 👊'
-)
-
-SUBJECT, HTML_BODY = get_html_content(EXCEL_FILE, MSGS)
-
-if HTML_BODY:
-    with open("index.html", "w", encoding="utf-8") as f:
-        f.write(HTML_BODY)
-
-print(SUBJECT)
-exit(0)
 
 class CONST:
     SENSITIVE_KEYWORDS = [
@@ -198,7 +201,7 @@ CFG = CONST({
 msg = EmailMessage()
 for k, v in CFG.items():
     msg[k.title()] = v
-msg.set_content('\n'.join([msg.replace('&apos;', '—') for msg in MSGS]))
+msg.set_content(clean('\n'.join([*MSGS[:2], MSGS[-1]])))
 msg.add_alternative(HTML_BODY, subtype='html')
 
 # --- ADD EXCEL_FILE ---

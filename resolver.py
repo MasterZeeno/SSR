@@ -4,7 +4,7 @@ import xlwings as xw
 app = xw.App(visible=False)
 
 try:
-    wb = app.books.open('NSB-P2 SSR.xlsx')
+    wb = app.books.open('PE-01-NSBP2-23 SSR.xlsx')
     shts = [sht for sht in wb.sheets if sht.visible]
 
     if shts:
@@ -16,10 +16,10 @@ try:
             ws.range(f"R{row}").value = pws.range(f"{col}{row}").value
             if row < 67:
                 ws.range(f"T{row}").value = max(ws.range(f"R{row}").value, pws.range(f"{col}{row}").value, pws.range(f"T{row}").value)
+        wb.save()
     else:
         print("No visible sheets found.")
 
-    wb.save()
     wb.close()
 
 finally:

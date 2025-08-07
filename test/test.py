@@ -8,9 +8,25 @@ from types import MappingProxyType
 
 from test2 import get_html_content
 
-output_path = "body.html"
-with open(output_path, "w", encoding="utf-8") as f:
-    f.write(get_html_content())
+EXCEL_FILE = '../NSB-P2 SSR.xlsx'
+
+if not os.path.isfile(EXCEL_FILE):
+    raise FileNotFoundError(f"File not found — {EXCEL_FILE}")
+
+MSGS = (
+    'Greetings! ✨',
+    'Please see the attached file regarding the subject mentioned above.',
+    'For your convenience, a brief summary is also provided in the table below.',
+    'Thank you&mdash;and as always, ', 'Safety First! 👊'
+)
+
+SUBJECT, HTML_BODY = get_html_content(EXCEL_FILE, MSGS)
+
+if HTML_BODY:
+    with open("index.html", "w", encoding="utf-8") as f:
+        f.write(HTML_BODY)
+
+print(SUBJECT)
 exit(0)
 
 class CONST:
@@ -170,7 +186,7 @@ def estr(S=None, T=0):
     
 # --- CONFIGURATION ---
 CFG = CONST({
-    "subject": "Test HTML Email with Attachment",
+    "subject": SUBJECT,
     "from": estr('zeenoliev',1),
     "password": "frmoyroohmevbgvb",
     "alias": ["sender", "from"],
@@ -178,42 +194,21 @@ CFG = CONST({
     "cc": estr(['rayajcimacio','rayajcimacio2'],1)
 })
 
-MSGS = (
-    'Greetings! ✨',
-    'Please see attached file for the above-mentioned subject.',
-    'For your convenience, a brief summary is also provided in the table below.',
-    'Thank you—and as always, Safety First! 👊'
-)
-ATTACHMENT = 'NSB-P2 SSR.xlsx'
-HTML_BODY = html_content
-# HTML_BODY = f"""
-# <html>
-  # <body>
-    # <h3>{MSGS[0]}</h3>
-    # <p>{' '.join(MSGS[1:])}</p>
-  # </body>
-# </html>
-# """
-
 # --- BUILD EMAIL ---
 msg = EmailMessage()
 for k, v in CFG.items():
     msg[k.title()] = v
-msg.set_content('\n'.join(MSGS))
+msg.set_content('\n'.join([msg.replace('&apos;', '—') for msg in MSGS]))
 msg.add_alternative(HTML_BODY, subtype='html')
 
-# --- ADD ATTACHMENT ---
-if os.path.exists(ATTACHMENT):
-    mime_type, _ = guess_type(ATTACHMENT)
-    maintype, subtype = mime_type.split('/') if mime_type else ('application', 'octet-stream')
-    
-    with open(ATTACHMENT, 'rb') as f:
-        file_data = f.read()
-        file_name = os.path.basename(ATTACHMENT)
-        msg.add_attachment(file_data, maintype=maintype, subtype=subtype, filename=file_name)
-else:
-    print(f"Attachment file not found: {ATTACHMENT}")
-    exit(1)
+# --- ADD EXCEL_FILE ---
+mime_type, _ = guess_type(EXCEL_FILE)
+maintype, subtype = mime_type.split('/') if mime_type else ('application', 'octet-stream')
+
+with open(EXCEL_FILE, 'rb') as f:
+    file_data = f.read()
+    file_name = os.path.basename(EXCEL_FILE)
+    msg.add_attachment(file_data, maintype=maintype, subtype=subtype, filename=file_name)
 
 # --- SEND EMAIL ---
 try:
@@ -222,5 +217,6 @@ try:
         smtp.login(CFG.sender, CFG.password)
         smtp.send_message(msg)
         print("Email sent successfully.")
+    
 except Exception as e:
     print(f"Error sending email: {e}")

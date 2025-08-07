@@ -19,7 +19,7 @@ def format_cell(cell):
 if len(sys.argv) == 2:
     path = sys.argv[1]
 else:
-    path = 'NSB-P2 SSR'
+    path = 'PE-01-NSBP2-23 SSR'
 
 if not path.lower().endswith('.xlsx'):
     path += '.xlsx'
