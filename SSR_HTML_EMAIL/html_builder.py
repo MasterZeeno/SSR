@@ -159,6 +159,8 @@ HTML_BODY = minify(f"""
 <body {WRAPPER}
     <div {WRAPPER}
         <div style="{CONTAINER_STYLE}">
+            <div style="height:0;max-height:0;width:0;overflow:hidden;opacity:0">{SUBJECT}</div>
+            <div style="height:0;max-height:0;width:0;overflow:hidden;opacity:0">{"&nbsp;"*69}</div>
             <div style="padding:{FONT_SIZE*0.75}px {FONT_SIZE*1.5}px {FONT_SIZE*1.5}px;">
                 {CONTENT_DIV};line-height:0;">
                     <p style="font-size:{FONT_SIZE*1.375}px;{bold()};color:{FG_LITE}">{REPORT[0]} ({REPORT[1]})</p>
