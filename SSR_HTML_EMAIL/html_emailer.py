@@ -192,12 +192,12 @@ OPERATION = sys.argv[1] if len(sys.argv) > 1 else ""
 
 CFG = {
     "subject": SUBJECT,
+    "sender": estr('zeenoliev',1),
     "from": ' '.join([
         ZEE["name"],
         f"<{estr('zeenoliev',1)}>"
     ]),
     "password": "frmoyroohmevbgvb",
-    "alias": ["sender", "from"]
 }
 
 if "force" in OPERATION.lower():
