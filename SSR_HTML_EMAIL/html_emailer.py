@@ -6,6 +6,7 @@ import sys
 import html
 from html.parser import HTMLParser
 from email.message import EmailMessage
+from email.utils import formataddr
 from mimetypes import guess_type
 from types import MappingProxyType
 
@@ -193,10 +194,10 @@ OPERATION = sys.argv[1] if len(sys.argv) > 1 else ""
 CFG = {
     "subject": SUBJECT,
     "sender": estr('zeenoliev',1),
-    "from": ' '.join([
+    "from": formataddr((
         ZEE["name"],
-        f"<{estr('zeenoliev',1)}>"
-    ]),
+        estr('zeenoliev',1)
+    )),
     "password": "frmoyroohmevbgvb",
 }
 
