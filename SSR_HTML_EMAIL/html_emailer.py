@@ -9,7 +9,7 @@ from email.message import EmailMessage
 from mimetypes import guess_type
 from types import MappingProxyType
 
-from html_builder import HTML_BODY, SUBJECT, MSGS, EXCEL_FILE_PATH
+from html_builder import HTML_BODY, SUBJECT, MSGS, EXCEL_FILE_PATH, ZEE
 
 class HTMLStripper(HTMLParser):
     def __init__(self):
@@ -192,7 +192,10 @@ OPERATION = sys.argv[1] if len(sys.argv) > 1 else ""
 
 CFG = {
     "subject": SUBJECT,
-    "from": estr('zeenoliev',1),
+    "from": ' '.join([
+        ZEE["name"],
+        f"<{estr('zeenoliev',1)}>"
+    ]),
     "password": "frmoyroohmevbgvb",
     "alias": ["sender", "from"]
 }
