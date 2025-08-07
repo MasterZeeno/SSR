@@ -79,7 +79,7 @@ CONTENT_DIV = f"""<div style="dir:ltr;text-align:left;
     line-height:{LINE_HEIGHT}"""
 CONTAINER_STYLE = f"""border-radius:{BORDER_RADIUS}px;font-family:{FONT_FAMILY};
     width:{MAX_WIDTH}px;max-width:{MAX_WIDTH}px;height:auto;background-color:#fff;
-    margin:8px auto;padding:0px 24px 24px;"""
+    margin:8px auto;padding:{FONT_SIZE * 1.5}px;"""
 IMG_DEFAULT_STYLES = f"""{VALIGN};color:{FG_VAR};height:auto;font-size:{FONT_SIZE/3}px;
     text-decoration:none;outline:none;border:none;"""
 SRC_IMG_LINK = f"""https://raw.githubusercontent.com/{REPO_OWNER}/{REPO_NAME}/refs/heads/main/{os.path.basename(os.getcwd())}/assets"""
