@@ -44,7 +44,9 @@ jobs:
 
       - name: Run Email Script if not an Update commit
         if: ${{ !startsWith(env.COMMIT_MSG, 'Update') }}
-        run: python SSR_HTML_EMAIL/html_emailer.py "${{ env.COMMIT_MSG }}"
+        run: |
+          cd SSR_HTML_EMAIL || exit 1
+          python html_emailer.py "${{ env.COMMIT_MSG }}"
 
       - name: Auto commit changes if any
         uses: stefanzweifel/git-auto-commit-action@v6
