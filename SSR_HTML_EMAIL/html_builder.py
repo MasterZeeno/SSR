@@ -1,6 +1,6 @@
 import html, os, re, requests, subprocess
 from datetime import datetime
-from urllib.parse import urlparse, urlunparse, quote, quote_plus, parse_qsl, urlencode
+from urllib.parse import urlparse, urlunparse, quote, parse_qsl, urlencode
 from excel_data_extractor import REPORT, HEADERS, SUMMARY
 
 def minify(html_text):
