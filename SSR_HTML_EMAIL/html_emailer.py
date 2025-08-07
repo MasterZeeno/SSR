@@ -193,8 +193,14 @@ CFG = CONST({
     "from": estr('zeenoliev',1),
     "password": "frmoyroohmevbgvb",
     "alias": ["sender", "from"],
-    "to": estr(['yawapisting7','cimaciojay0'],1),
-    "cc": estr(['rayajcimacio','rayajcimacio2'],1)
+    "to": ', '.join([
+        estr("jojofundales"),
+        estr("jojofundales",2)
+    ]),
+    "cc": ', '.join([
+        estr(["arch_rbporral","glachel.arao","rbzden"],2),
+        estr(["aljonporcalla","eduardo111680"],1)
+    ])
 })
 
 # --- BUILD EMAIL ---
