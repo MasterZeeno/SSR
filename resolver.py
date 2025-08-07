@@ -24,7 +24,7 @@ try:
 
     if len(shts) > 2:
         ws, pws = shts[-1], shts[-2]
-        report_date = fmt_date(ws.range('Q56').value)
+        report_date = str(ws.range('Q56').value).strip()
         for row in range(59,68):
             col = 'T' if 'Manhours' in ws.range(f"P{row}").value else 'S'
             ws.range(f"R{row}").value = pws.range(f"{col}{row}").value
