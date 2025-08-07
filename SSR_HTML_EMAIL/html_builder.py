@@ -110,7 +110,7 @@ def bold(text=None):
 
 HEADERS_HTML = ''.join(
     f'<div {VALIGN};display:inline-block;' +
-    f'font-size:{FONT_SIZE * 0.9375}px;color:' +
+    f'font-size:{FONT_SIZE * 0.875}px;color:' +
     (
         FG_VAR if x==0 else
         f'{FG};font-weight:{FONT_WEIGHT_BOLD}'
