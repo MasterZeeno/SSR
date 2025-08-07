@@ -1,7 +1,9 @@
 import html, os, re, requests, subprocess
 from datetime import datetime
 from urllib.parse import urlparse, urlunparse, quote, parse_qsl, urlencode
-from excel_data_extractor import REPORT, HEADERS, SUMMARY
+from excel_data_extractor import REPORT, HEADERS, SUMMARY, WB_PATH
+
+EXCEL_FILE_PATH = WB_PATH
 
 def minify(html_text):
     html_text = re.sub(r'>\s+<', '><', html_text)         # Remove whitespace between tags

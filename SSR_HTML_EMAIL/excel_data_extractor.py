@@ -5,28 +5,36 @@ from excel_iterators import getValues
 from smart_title import smart_title
 from datetime import datetime
 
-
 def extract_date(date_string):
     date_string = date_string.strip()
 
-    # Regex to capture optional first month, then second month, day, and year
-    match = re.search(r'(?:\w+\s+\d{1,2}-)?(\w+)\s+(\d{1,2}),\s*(\d{4})', date_string)
+    # Try to match either:
+    # - "July 28-August 3, 2025"
+    # - "August 4-10, 2025"
+    match = re.search(
+        r'(?:\w+\s+\d{1,2}-)?(\w+)\s+(\d{1,2}),?\s*(\d{4})',
+        date_string,
+        flags=re.IGNORECASE
+    )
     if not match:
-        return None  # Invalid format
+        return None
 
     month, day, year = match.groups()
 
-    try:
-        return datetime.strptime(f"{month} {day} {year}", "%B %d %Y").date()
-    except ValueError:
-        return None
+    for fmt in ("%B %d %Y", "%b %d %Y"):
+        try:
+            return datetime.strptime(f"{month} {day} {year}", fmt).date()
+        except ValueError:
+            continue
+
+    return None
 
 def is_report_date(date_obj):
     return date_obj < datetime.today().date()
 
 WB_FOLDER = (Path(__file__).parent / "../SSR WORKBOOKS").resolve()
 
-xlsx_files = [
+VALID_WB = [
     file for file in sorted(
         WB_FOLDER.glob('*.xlsx'),
         key=lambda f: f.stat().st_mtime,
@@ -36,14 +44,11 @@ xlsx_files = [
     and is_report_date(end_date)
 ]
 
-for file in xlsx_files:
-    print(file.name)
-
-exit(0)
-
 # === Auto-executed when imported ===
 
-WB_PATH = (Path(__file__).parent / "../PE-01-NSBP2-23 SSR.xlsx").resolve()
+WB_PATH = (Path(__file__).parent / WB_FOLDER / VALID_WB[0]).resolve()
+
+# WB_PATH = (Path(__file__).parent / "../PE-01-NSBP2-23 SSR.xlsx").resolve()
 
 wb = load_workbook(WB_PATH, read_only=True, data_only=True)
 ws = [s for s in wb.worksheets if s.sheet_state == "visible"][-1]

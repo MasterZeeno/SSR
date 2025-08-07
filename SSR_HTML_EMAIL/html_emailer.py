@@ -5,12 +5,11 @@ import smtplib
 import sys
 import html
 from html.parser import HTMLParser
-from pathlib import Path
 from email.message import EmailMessage
 from mimetypes import guess_type
 from types import MappingProxyType
 
-from html_builder import HTML_BODY, SUBJECT, MSGS
+from html_builder import HTML_BODY, SUBJECT, MSGS, EXCEL_FILE_PATH
 
 class HTMLStripper(HTMLParser):
     def __init__(self):
@@ -28,7 +27,7 @@ def clean(html_text):
     stripper.feed(html_text)
     return stripper.get_data()
 
-EXCEL_FILE = (Path(__file__).parent / "../PE-01-NSBP2-23 SSR.xlsx").resolve()
+EXCEL_FILE = EXCEL_FILE_PATH
 
 if not os.path.isfile(EXCEL_FILE):
     raise FileNotFoundError(f"File not found — {EXCEL_FILE}")

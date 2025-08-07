@@ -1,19 +1,8 @@
-import os, re
+import os
 import xlwings as xw
-from calendar import month_name, month_abbr
 
 WB_NAME = 'PE-01-NSBP2-23 SSR'
 WB_FOLDER = f"{WB_NAME.split()[1]} WORKBOOKS"
-MONTH_MAP = {full: abbr for full, abbr in zip(month_name[1:], month_abbr[1:])}
-DATE_REGEX = r'\b(' + '|'.join(sorted(map(re.escape, MONTH_MAP), key=len, reverse=True)) + r')\b'
-
-def fmt_date(text):
-    text = str(text).strip()
-    return re.sub(
-            DATE_REGEX,
-            lambda m: MONTH_MAP[m.group(0)],
-            text
-        ) if text else ''
 
 # Start a hidden Excel instance
 app = xw.App(visible=False)
