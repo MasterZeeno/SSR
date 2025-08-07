@@ -3,6 +3,7 @@ import xlwings as xw
 from calendar import month_name, month_abbr
 
 WB_NAME = 'PE-01-NSBP2-23 SSR'
+WB_FOLDER = f"{WB_NAME.split()[1]} WORKBOOKS"
 MONTH_MAP = {full: abbr for full, abbr in zip(month_name[1:], month_abbr[1:])}
 DATE_REGEX = r'\b(' + '|'.join(sorted(map(re.escape, MONTH_MAP), key=len, reverse=True)) + r')\b'
 
@@ -32,10 +33,11 @@ try:
         wb.save()
 
         new_wb = xw.Book(visible=False)
-        ws.api.Copy(Before=new_wb.sheets[0].api)
-        # new_wb.sheets[0].delete()
-        os.makedirs(WB_NAME.split()[1], exist_ok=True)
-        new_wb.save(f"{WB_NAME.split()[1]}/{WB_NAME.split()[1]} - {report_date}.xlsx")
+        before = new_wb.sheets[0]
+        ws.api.Copy(Before=before.api)
+        before.delete()
+        os.makedirs(WB_FOLDER, exist_ok=True)
+        new_wb.save(f"{WB_FOLDER}/{report_date}.xlsx")
         new_wb.close()
     else:
         print("No visible sheets found.")
