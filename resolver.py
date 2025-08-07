@@ -33,7 +33,7 @@ try:
 
         new_wb = xw.Book(visible=False)
         ws.api.Copy(Before=new_wb.sheets[0].api)
-        new_wb.sheets[0].delete()
+        # new_wb.sheets[0].delete()
         os.makedirs(WB_NAME.split()[1], exist_ok=True)
         new_wb.save(f"{WB_NAME.split()[1]}/{WB_NAME.split()[1]} - {report_date}.xlsx")
         new_wb.close()
