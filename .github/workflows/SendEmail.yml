@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-  # schedule:
-  #   - cron: '0 22 * * 0'  # Runs every Monday 6:00 AM (Asia/Manila, UTC+8)
+  schedule:
+    - cron: "0 22 * * 0" # Runs every Monday 6:00 AM (Asia/Manila, UTC+8)
 
 jobs:
   send_email:
