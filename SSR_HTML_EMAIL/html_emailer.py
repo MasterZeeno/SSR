@@ -206,7 +206,7 @@ if "force" in OPERATION:
         ]),
         "cc": ', '.join([
             estr(["arch_rbporral","glachel.arao","rbzden"],2),
-            estr(["aljonporcalla","eduardo111680"],1)
+            estr(["maravilladarwin87.dm@gmail.com", "aljonporcalla","eduardo111680"],1)
         ])
     })
 else:
