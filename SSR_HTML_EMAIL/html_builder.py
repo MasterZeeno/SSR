@@ -85,6 +85,7 @@ CONTAINER_STYLE = f"""border-radius:{BORDER_RADIUS}px;font-family:{FONT_FAMILY};
 IMG_DEFAULT_STYLES = f"""{VALIGN};color:{FG_VAR};height:auto;font-size:{FONT_SIZE/3}px;
     text-decoration:none;outline:none;border:none;"""
 SRC_IMG_LINK = f"""https://raw.githubusercontent.com/{REPO_OWNER}/{REPO_NAME}/refs/heads/main/{os.path.basename(os.getcwd())}/assets"""
+WB_DOWNLOAD_LINK = urlify(f"""https://raw.githubusercontent.com/{REPO_OWNER}/{REPO_NAME}/refs/heads/main/{WB_PATH.parent.name}/{WB_PATH.name}""")
 
 def make_img(src):
     src_obj = HCC if src == 'hcc' else ZEE
@@ -162,7 +163,15 @@ HTML_BODY = minify(f"""
                 {CONTENT_DIV};line-height:0;">
                     <p style="font-size:{FONT_SIZE*1.375}px;{bold()};color:{FG_LITE}">{REPORT[0]} ({REPORT[1]})</p>
                     {HEADERS_HTML}
-                </div>{br(2)}{hr(FONT_SIZE*0.375, 69)}
+                </div>
+                {br(2)}
+                <div {VALIGN};text-align:center;padding:{FONT_SIZE*0.5}px auto;">
+                    <a href="{WB_DOWNLOAD_LINK}" {VALIGN};width:max-content;display:block;text-decoration:none;margin:auto;border-radius:25px;padding:{FONT_SIZE*0.5}px {FONT_SIZE}px;{bold()};font-size:{FONT_SIZE * 0.875};text-align:center;color:#fff;background-color:{FG_LITE};">
+                        Download file
+                    </a>
+                </div>
+                {br(2)}
+                {hr(FONT_SIZE*0.375, 69)}
                 {CONTENT_DIV};padding-top:{FONT_SIZE*1}px;">
                     <p style="{bold()};font-size:{FONT_SIZE*1.125}px;">{MSGS[0]}</p>
                     <p>{MSGS[1]}</p><p>{MSGS[2]}</p>

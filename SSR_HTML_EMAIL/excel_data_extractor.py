@@ -34,7 +34,7 @@ def is_report_date(date_obj):
 
 WB_FOLDER = (Path(__file__).parent / "../SSR WORKBOOKS").resolve()
 
-VALID_WB = [
+WB_PATH = [
     file for file in sorted(
         WB_FOLDER.glob('*.xlsx'),
         key=lambda f: f.stat().st_mtime,
@@ -42,11 +42,11 @@ VALID_WB = [
     )
     if (end_date := extract_date(file.stem)) is not None
     and is_report_date(end_date)
-]
+][0]
 
 # === Auto-executed when imported ===
 
-WB_PATH = (Path(__file__).parent / WB_FOLDER / VALID_WB[0]).resolve()
+# WB_PATH = (Path(__file__).parent / WB_FOLDER / VALID_WB).resolve()
 
 # WB_PATH = (Path(__file__).parent / "../PE-01-NSBP2-23 SSR.xlsx").resolve()
 
