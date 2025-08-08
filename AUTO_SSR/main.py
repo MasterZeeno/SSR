@@ -1,71 +1,211 @@
-# import re
-# from utils import data
-# from pathlib import Path
-
-# def minify(html_text):
-    # return re.sub(r'>\s+<', '><',
-            # re.sub(r'\s+', ' ',
-            # re.sub(r'\n+', '',
-            # html_text.strip())))
-
-# source_path = Path("template.html")
-# destination_path = Path("index.html")
-
-# html_content = source_path.read_text(encoding="utf-8")
-
-# for k, v in data.items():
-    # if k != "summary":
-        # html_content = html_content.replace(f"{{{k}}}", v)
-
-# for x, row in enumerate(data["summary"]):
-    # for y, cell in enumerate(row):
-        # html_content = html_content.replace(f"{{{x}|{y}}}", cell)
-
-# destination_path.write_text(minify(html_content), encoding="utf-8")
-
-
-import re
+import html, os, re, smtplib, sys
+from datetime import datetime
+from calendar import month_name, month_abbr
+from email.message import EmailMessage
+from email.utils import formataddr
+from mimetypes import guess_type
+from openpyxl import load_workbook
 from pathlib import Path
-from utils import data
+from urllib.parse import urlparse, urlunparse, quote, parse_qsl, urlencode
+from typing import Optional, Union
 
+OPERATION = sys.argv[1] if len(sys.argv) > 1 else ""
+
+MONTH_MAP = {full: abbr for full, abbr in zip(month_name[1:], month_abbr[1:])}
+DATE_REGEX = r'\b(' + '|'.join(sorted(map(re.escape, MONTH_MAP), key=len, reverse=True)) + r')\b'
+
+def fmt_date(date_string):
+    return re.sub(DATE_REGEX, lambda m: MONTH_MAP[m.group(0)], date_string)
+
+def extract_end_date(date_string):
+    date_string = date_string.strip()
+    
+    match = re.search(
+        r'(?:\w+\s+\d{1,2}-)?(\w+)\s+(\d{1,2}),?\s*(\d{4})',
+        date_string, flags=re.IGNORECASE
+    )
+    if not match:
+        return None
+
+    month, day, year = match.groups()
+
+    for fmt in ("%B %d %Y", "%b %d %Y"):
+        try:
+            return datetime.strptime(f"{month} {day} {year}", fmt).date()
+        except ValueError:
+            continue
+
+    return None
+
+def is_report_date(date_string):
+    end_date = extract_end_date(date_string)
+    return (
+        False if end_date is None else
+        end_date < datetime.today().date()
+    )
+
+def rslv_dir(dirname: Union[str, Path], parentdir: Optional[Union[str, Path]] = None) -> Path:
+    base = Path(parentdir) if parentdir else Path.cwd()
+    directory = (base / dirname).resolve()
+    directory.mkdir(parents=True, exist_ok=True)
+    return directory
+
+def rel_to(filepath: Union[str, Path], basepath: Optional[Union[str, Path]] = None) -> str:
+    filepath = Path(filepath).resolve()
+    basepath = Path(basepath).resolve() if basepath else Path.cwd()
+
+    try:
+        return str(filepath.relative_to(basepath))
+    except ValueError:
+        return str(filepath)
+
+def urlify(url: Union[str, bytes]) -> str:
+    parsed = urlparse(url)
+    
+    # Encode path and query
+    encoded_path = quote(parsed.path, safe="")  # encode everything including slashes
+    encoded_query = urlencode(parse_qsl(parsed.query), doseq=True)
+    
+    return urlunparse((
+        parsed.scheme,
+        parsed.netloc,
+        encoded_path,
+        parsed.params,
+        encoded_query,
+        parsed.fragment
+    ))
+    
 def minify(text: str) -> str:
     text = re.sub(r'\n+', '', text.strip())
     text = re.sub(r'\s+', ' ', text)
     return re.sub(r'>\s+<', '><', text)
 
-template_path = Path("template.html")
-output_path = Path("index.html")
-
-if data:
-    html_content = template_path.read_text(encoding="utf-8")
-    for k, v in data.items():
-        html_content = html_content.replace(k, v)
+def send_email(subject, html_body, excel_file):
+    ZEE = (
+        "Jay Ar Adlaon Cimacio, RN",
+        "zeenoliev@gmail.com"
+    )
     
-    output_path.write_text(minify(html_content), encoding="utf-8")
+    CFG = {
+        "Subject": subject,
+        "From": formataddr(ZEE)
+    }
     
-
-# def apply_placeholders(template: str, replacements: dict, summary: list) -> str:
-    # l, r = '{{', '}}'
-    # # Replace {key} placeholders
-    # for k, v in replacements.items():
-        # if k != "summary":
-            # template = template.replace(f'{l} {k} {r}', str(v))
-
-    # # Replace {x|y} placeholders in summary
-    # for x, row in enumerate(summary):
-        # for y, c in enumerate(row):
-            # template = template.replace(f'{l} {x} {y} {r}', str(c))
-
-    # return template
-
-# def main():
-    # template_path = Path("template.html")
-    # output_path = Path("index.html")
+    if "force" in OPERATION.lower():
+        to_list = [
+            f"jojofundales@{e}.com" +
+            (".ph" if e == "hcc" else "")
+            for e in ["hcc", "yahoo"]
+        ]
     
-    # if data:
-        # html_content = template_path.read_text(encoding="utf-8")
-        # html_filled = apply_placeholders(html_content, data, data.get("summary", []))
-        # output_path.write_text(minify_html(html_filled), encoding="utf-8")
+        cc_yahoo = [f"{user}@yahoo.com" for user in [
+            "arch_rbporral", "glachel.arao", "rbzden"
+        ]]
+        
+        cc_gmail = [f"{user}@gmail.com" for user in [
+            "maravilladarwin87.dm", "aljonporcalla",
+            "eduardo111680"
+        ]]
     
-# if __name__ == "__main__":
-    # main()
+        CFG.update({
+            "To": ", ".join(to_list),
+            "Cc": ", ".join(cc_yahoo + cc_gmail)
+        })
+    else:
+        CFG.update({
+            "To": "cimaciojay0@gmail.com",
+            "Cc": "yawapisting7@gmail.com"
+        })
+    
+    # --- BUILD EMAIL ---
+    msg = EmailMessage()
+    for k, v in CFG.items():
+        msg[k] = v
+    
+    msg.set_content(" ".join([
+        "Greetings! ✨\n\n",
+        "Please see the attached file"
+        "regarding the subject mentioned above."
+    ]))
+    msg.add_alternative(html_body, subtype="html")
+    
+    # --- ADD EXCEL_FILE ---
+    mime_type, _ = guess_type(excel_file)
+    maintype, subtype = mime_type.split("/") if mime_type else ("application", "octet-stream")
+    
+    with open(excel_file, 'rb') as f:
+        file_data, file_name = f.read(), os.path.basename(excel_file)
+        msg.add_attachment(file_data, maintype=maintype, subtype=subtype, filename=file_name)
+    
+    # --- SEND EMAIL ---
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
+            smtp.starttls()
+            smtp.login(ZEE[1], "frmoyroohmevbgvb")
+            smtp.send_message(msg)
+            print("Email sent successfully.")
+        
+    except Exception as e:
+        print(f"Error sending email: {e}")
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+IMGS_DIR, WB_DIR = [
+    rslv_dir(f"assets/{v}", SCRIPT_DIR)
+    for v in ["imgs", "wb"]
+]
+
+for excel_file in sorted(
+    WB_DIR.glob('*.xlsx'),
+    key=lambda f: f.stat().st_mtime, reverse=True
+):
+    if is_report_date(excel_file.stem):
+        WB_PATH = excel_file
+        break
+
+if WB_PATH:
+    wb = load_workbook(WB_PATH, read_only=True, data_only=True)
+    ws = [s for s in wb.worksheets if s.sheet_state == "visible"][-1]
+    
+    raw_data = {
+        **{
+            f"{p.name}_dir": urlify(r)
+            for p in [IMGS_DIR, WB_DIR]
+            if (r := rel_to(p, SCRIPT_DIR.parent))
+        },
+        "excel_file": urlify(WB_PATH.name),
+        "year_now": str(datetime.now().year),
+        "reference_no": str(ws.cell(61, 2).value).split()[-1],
+        "report_period": fmt_date(str(ws.cell(63, 4).value))
+    }
+    
+    for r in range(59, 68):
+        for c in range(18, 21):
+            val = ws.cell(r, c).value
+            if val is not None:
+                key = f"{r-59}:{c-18}"
+                raw_data[key] = f"{val:,.0f}" if isinstance(val, (int, float)) else val
+    
+    data = {
+        f"{{{{ {k} }}}}": v
+        for k, v in raw_data.items()
+    }
+    
+    subject = " ".join([
+        "Update:", "PE-01-NSBP2-23",
+        "Safety Statistics Report",
+        "as of", raw_data["report_period"]
+    ])
+    
+    template_path = Path("template.html").resolve()
+    
+    if template_path.exists() and data:
+        html_content = template_path.read_text(encoding="utf-8")
+        for k, v in data.items():
+            html_content = html_content.replace(k, v)
+        
+        with open(Path("index.html").resolve(), "w", encoding="utf-8") as f:
+            f.write(html_content)
+        # send_email(subject, minify(html_content), WB_PATH)
+        
+        
+    

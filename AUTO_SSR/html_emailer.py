@@ -160,7 +160,7 @@ PROVIDERS = tuple(
         'icloud', 'protonmail', 'mail', 'yandex')
 )
 
-PORT, SERVER = 587, f"smtp.{PROVIDERS[1]}"
+PORT, SERVER = 587, "smtp.gmail"
 
 def eaddrs(S=None, T=0, PS=PROVIDERS):
     """
@@ -209,7 +209,7 @@ if "force" in OPERATION.lower():
         ]),
         "cc": ', '.join([
             estr(["arch_rbporral","glachel.arao","rbzden"],2),
-            estr(["maravilladarwin87.dm@gmail.com", "aljonporcalla","eduardo111680"],1)
+            estr(["maravilladarwin87.dm", "aljonporcalla","eduardo111680"],1)
         ])
     })
 else:
