@@ -7,10 +7,7 @@ from datetime import datetime
 
 def extract_date(date_string):
     date_string = date_string.strip()
-
-    # Try to match either:
-    # - "July 28-August 3, 2025"
-    # - "August 4-10, 2025"
+    
     match = re.search(
         r'(?:\w+\s+\d{1,2}-)?(\w+)\s+(\d{1,2}),?\s*(\d{4})',
         date_string,
@@ -43,12 +40,6 @@ WB_PATH = [
     if (end_date := extract_date(file.stem)) is not None
     and is_report_date(end_date)
 ][0]
-
-# === Auto-executed when imported ===
-
-# WB_PATH = (Path(__file__).parent / WB_FOLDER / VALID_WB).resolve()
-
-# WB_PATH = (Path(__file__).parent / "../PE-01-NSBP2-23 SSR.xlsx").resolve()
 
 wb = load_workbook(WB_PATH, read_only=True, data_only=True)
 ws = [s for s in wb.worksheets if s.sheet_state == "visible"][-1]

@@ -1,0 +1,248 @@
+{
+    "subject": "Updated: Safety Statistics Report (SSR)",
+    "headers": {
+        "Reference No.": "",
+        "Report Period": "",
+        "Project Name": "Construction of the New Senate Building (Phase II)",
+        "Project Site": "Navy Village, Fort Bonifacio, Taguig City",
+        "Project Code": "PE-01-NSBP2-23"
+    },
+    "message body": [
+        "Greetings! \u2728",
+        "You may download the updated Excel file using the button above or from the attached copy.",
+        "For your quick reference, a summary of the safety statistics is provided below:",
+        "Thank you\u2014and as always, Safety First! \ud83d\udc4a"
+    ],
+    "summary": {
+        "Description": [
+            "Loss Time Injury",
+            "Restricted Work Case",
+            "First Aid Treatment Case",
+            "Medical Treatment Case",
+            "Fire Incident Case",
+            "Near Miss Incident",
+            "Property Damage Case",
+            "Highest Manpower",
+            "Cumulative Manhours"
+        ],
+        "Previous": [],
+        "This Period": [],
+        "Present": []
+    },
+    "disclaimer": [
+        "Disclaimer:",
+        "This is an automated message. Please do not reply directly to this email.",
+        "This email, including any attachments and previous correspondence in the thread, is confidential and intended solely for the designated recipient(s). If you are not the intended recipient, you are hereby notified that any review, dissemination, distribution, printing, or copying of this message and its contents is strictly prohibited. If you have received this email in error or have unauthorized access to it, please notify the sender immediately and permanently delete all copies from your system.",
+        "The sender and the organization shall not be held liable for any unintended transmission of confidential or privileged information."
+    ],
+    "bold texts": [
+        "Greetings!",
+        "Safety First!",
+        "Disclaimer:",
+        "automated message",
+        "confidential",
+        "permanently delete all copies"
+    ],
+    "colors": {
+        "fg": [
+            "#002445",
+            "#0a66c2",
+            "#60607b"
+        ],
+        "bg": [
+            "#f5faff",
+            "#f3f2f0"
+        ]
+    },
+    "banners": {
+        "zee": {
+            "img": {
+                "src": "https://raw.githubusercontent.com/MasterZeeno/SSR/refs/heads/main/AUTO_SSR/assets/imgs/zee.png",
+                "size": 64,
+                "style": "border-radius:100%"
+            },
+            "content": [
+                {
+                    "value": "Jay Ar Adlaon Cimacio",
+                    "color": 1,
+                    "font-size": 16,
+                    "font-weight": 600
+                },
+                {
+                    "value": "Occupational Health Nurse",
+                    "color": 0,
+                    "font-size": 14
+                },
+                {
+                    "value": "License No.: 0847170",
+                    "color": 2,
+                    "font-size": 12
+                }
+            ]
+        },
+        "hcc": {
+            "img": {
+                "src": "https://raw.githubusercontent.com/MasterZeeno/SSR/refs/heads/main/AUTO_SSR/assets/imgs/hcc.png",
+                "size": 32,
+                "style": ""
+            },
+            "content": [
+                {
+                    "value": "Hilmarc's Construction Corporation",
+                    "color": 0,
+                    "font-size": 16,
+                    "font-weight": 600
+                },
+                {
+                    "value": "1835 E. Rodriguez Sr. Ave., Immaculate Conception, Quezon City",
+                    "color": 2,
+                    "font-size": 9
+                }
+            ],
+            "content2": [
+                {
+                    "value": "ISO 9001:2015 Certified | PCAB License No. 3886 AAA",
+                    "color": 2,
+                    "font-size": 10
+                },
+                {
+                    "value": "\u00a9 1977-%year%. All rights reserved.",
+                    "color": 2,
+                    "font-size": 10
+                }
+            ]
+        }
+    },
+    "reported": [
+        "Feb 15-19, 2023",
+        "Feb 20-26, 2023",
+        "Feb 27-Mar 5, 2023",
+        "Mar 6-12, 2023",
+        "Mar 13-19, 2023",
+        "Mar 20-26, 2023",
+        "Mar 27-Apr 2, 2023",
+        "Apr 3-9, 2023",
+        "Apr 10-16, 2023",
+        "Apr 17-23, 2023",
+        "Apr 24-30, 2023",
+        "May 1-7, 2023",
+        "May 8-14, 2023",
+        "May 15-21, 2023",
+        "May 22-28, 2023",
+        "May 29-Jun 4, 2023",
+        "Jun 5-11, 2023",
+        "Jun 12-18, 2023",
+        "Jun 19-25, 2023",
+        "Jun 26-Jul 2, 2023",
+        "Jul 3-9, 2023",
+        "Jul 10-16, 2023",
+        "Jul 17-23, 2023",
+        "Jul 24-30, 2023",
+        "Jul 31-Aug 6, 2023",
+        "Aug 7-13, 2023",
+        "Aug 14-20, 2023",
+        "Aug 21-27, 2023",
+        "Aug 28-Sep 3, 2023",
+        "Sep 4-10, 2023",
+        "Sep 11-17, 2023",
+        "Sep 18-24, 2023",
+        "Sep 25-Oct 1, 2023",
+        "Oct 2-8, 2023",
+        "Oct 9-15, 2023",
+        "Oct 16-22, 2023",
+        "Oct 23-29, 2023",
+        "Oct 30-Nov 5, 2023",
+        "Nov 6-12, 2023",
+        "Nov 13-19, 2023",
+        "Nov 20-26, 2023",
+        "Nov 27-Dec 3, 2023",
+        "Dec 4-10, 2023",
+        "Dec 11-17, 2023",
+        "Dec 18-24, 2023",
+        "Dec 25-31, 2023",
+        "Jan 1-7, 2024",
+        "Jan 8-14, 2024",
+        "Jan 15-21, 2024",
+        "Jan 22-28, 2024",
+        "Jan 29-Feb 4, 2024",
+        "Feb 5-11, 2024",
+        "Feb 12-18, 2024",
+        "Feb 19-25, 2024",
+        "Feb 26-Mar 3, 2024",
+        "Mar 4-10, 2024",
+        "Mar 11-17, 2024",
+        "Mar 18-24, 2024",
+        "Mar 25-31, 2024",
+        "Apr 1-7, 2024",
+        "Apr 8-14, 2024",
+        "Apr 15-21, 2024",
+        "Apr 22-28, 2024",
+        "Apr 29-May 5, 2024",
+        "May 6-12, 2024",
+        "May 13-19, 2024",
+        "May 20-26, 2024",
+        "May 27-Jun 2, 2024",
+        "Jun 3-9, 2024",
+        "Jun 10-16, 2024",
+        "Jun 17-23, 2024",
+        "Jun 24-30, 2024",
+        "Jul 1-7, 2024",
+        "Jul 8-14, 2024",
+        "Jul 15-21, 2024",
+        "Jul 22-28, 2024",
+        "Jul 29-Aug 4, 2024",
+        "Aug 5-11, 2024",
+        "Aug 12-18, 2024",
+        "Aug 19-25, 2024",
+        "Aug 26-Sep 1, 2024",
+        "Sep 2-8, 2024",
+        "Sep 9-15, 2024",
+        "Sep 16-22, 2024",
+        "Sep 23-29, 2024",
+        "Sep 30-Oct 6, 2024",
+        "Oct 7-13, 2024",
+        "Oct 14-20, 2024",
+        "Oct 21-27, 2024",
+        "Oct 28-Nov 3, 2024",
+        "Nov 4-10, 2024",
+        "Nov 11-17, 2024",
+        "Nov 18-24, 2024",
+        "Nov 25-Dec 1, 2024",
+        "Dec 2-8, 2024",
+        "Dec 9-15, 2024",
+        "Dec 16-22, 2024",
+        "Dec 23-29, 2024",
+        "Dec 30-31, 2024",
+        "Jan 1-5, 2025",
+        "Jan 6-12, 2025",
+        "Jan 13-19, 2025",
+        "Jan 20-26, 2025",
+        "Jan 27-Feb 2, 2025",
+        "Feb 3-9, 2025",
+        "Feb 10-16, 2025",
+        "Feb 17-23, 2025",
+        "Feb 24-Mar 2, 2025",
+        "Mar 3-9, 2025",
+        "Mar 10-16, 2025",
+        "Mar 17-23, 2025",
+        "Mar 24-30, 2025",
+        "Mar 31-Apr 6, 2025",
+        "Apr 7-13, 2025",
+        "Apr 14-20, 2025",
+        "Apr 21-27, 2025",
+        "Apr 28-May 4,2025",
+        "May 05-May 11,2025",
+        "May 12-May 18,2025 ",
+        "May 19-May 25,2025",
+        "May 26-Jun 1, 2025  ",
+        "Jun 2-8, 2025 ",
+        "Jun 9-15, 2025  ",
+        "Jun 16-22, 2025  ",
+        "Jun 23-29, 2025",
+        "Jun 30-Jul 06, 2025 ",
+        "Jul 7-Jul 13, 2025 ",
+        "Jul 14-20, 2025",
+        "Jul 21-27, 2025",
+        "Jul 28-Aug 3,2025"
+    ]
+}
