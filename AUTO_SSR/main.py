@@ -223,11 +223,12 @@ if WB_PATH:
         for k, v in data.items():
             html_content = html_content.replace(k, v)
         
-        send_email(subject, minify(html_content), WB_PATH)
-        
-        
+        html_content = minify(html_content)
+        send_email(subject, html_content, WB_PATH)
+        with open(Path("index.html").resolve(), "w", encoding="utf-8") as f:
+            f.write(html_content)
     
     
     
-# with open(Path("index.html").resolve(), "w", encoding="utf-8") as f:
-    # f.write(html_content)
+    
+    
