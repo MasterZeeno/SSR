@@ -1,11 +1,14 @@
-import html, os, re, smtplib, sys
-from datetime import datetime
-from calendar import month_name, month_abbr
-from email.message import EmailMessage
-from email.utils import formataddr
-from mimetypes import guess_type
-from openpyxl import load_workbook
+import os
+import re
+import smtplib
+import sys
 from pathlib import Path
+from datetime import datetime
+from mimetypes import guess_type
+from email.utils import formataddr
+from openpyxl import load_workbook
+from email.message import EmailMessage
+from calendar import month_name, month_abbr
 from urllib.parse import urlparse, urlunparse, quote, parse_qsl, urlencode
 from typing import Optional, Union
 
@@ -15,7 +18,11 @@ MONTH_MAP = {full: abbr for full, abbr in zip(month_name[1:], month_abbr[1:])}
 DATE_REGEX = r'\b(' + '|'.join(sorted(map(re.escape, MONTH_MAP), key=len, reverse=True)) + r')\b'
 
 def fmt_date(date_string):
-    return re.sub(DATE_REGEX, lambda m: MONTH_MAP[m.group(0)], date_string)
+    return re.sub(
+        DATE_REGEX,
+        lambda m: MONTH_MAP[m.group(0)],
+        date_string
+    )
 
 def extract_end_date(date_string):
     date_string = date_string.strip()
@@ -127,6 +134,7 @@ def send_email(subject, html_body, excel_file):
         "Please see the attached file"
         "regarding the subject mentioned above."
     ]))
+    
     msg.add_alternative(html_body, subtype="html")
     
     # --- ADD EXCEL_FILE ---
@@ -135,20 +143,31 @@ def send_email(subject, html_body, excel_file):
     
     with open(excel_file, 'rb') as f:
         file_data, file_name = f.read(), os.path.basename(excel_file)
-        msg.add_attachment(file_data, maintype=maintype, subtype=subtype, filename=file_name)
+        msg.add_attachment(
+            file_data,
+            maintype=maintype,
+            subtype=subtype,
+            filename=file_name
+        )
     
     # --- SEND EMAIL ---
     try:
         with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
             smtp.starttls()
-            smtp.login(ZEE[1], "frmoyroohmevbgvb")
+            smtp.login(
+                ZEE[1],
+                "frmoyroohmevbgvb"
+            )
             smtp.send_message(msg)
             print("Email sent successfully.")
         
     except Exception as e:
         print(f"Error sending email: {e}")
+        
+        
 
 SCRIPT_DIR = Path(__file__).resolve().parent
+
 IMGS_DIR, WB_DIR = [
     rslv_dir(f"assets/{v}", SCRIPT_DIR)
     for v in ["imgs", "wb"]
@@ -200,12 +219,15 @@ if WB_PATH:
     
     if template_path.exists() and data:
         html_content = template_path.read_text(encoding="utf-8")
+        
         for k, v in data.items():
             html_content = html_content.replace(k, v)
         
-        with open(Path("index.html").resolve(), "w", encoding="utf-8") as f:
-            f.write(html_content)
-        # send_email(subject, minify(html_content), WB_PATH)
+        send_email(subject, minify(html_content), WB_PATH)
         
         
     
+    
+    
+# with open(Path("index.html").resolve(), "w", encoding="utf-8") as f:
+    # f.write(html_content)
