@@ -1,2 +1,5 @@
-requests
+gspread
+pandas 
+gspread-formatting
+google-auth
 openpyxl

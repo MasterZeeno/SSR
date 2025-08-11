@@ -1,222 +1,129 @@
-import difflib
-import os
-import re
-import smtplib
-from email.message import EmailMessage
-from mimetypes import guess_type
-from types import MappingProxyType
+from pathlib import Path
+from datetime import datetime
+from typing import Optional, Any
+import pandas as pd
+import gspread
+from google.oauth2.service_account import Credentials
 
-from test2 import get_html_content
+from utils import rslv_dir, is_report_date  # Ensure these are properly defined
 
-EXCEL_FILE = '../NSB-P2 SSR.xlsx'
 
-if not os.path.isfile(EXCEL_FILE):
-    raise FileNotFoundError(f"File not found — {EXCEL_FILE}")
+def sheet_exists(spreadsheet, name: str):
+    for sheet in spreadsheet.worksheets():
+        if sheet.title == name:
+            return sheet
+    return None
 
-MSGS = (
-    'Greetings! ✨',
-    'Please see the attached file regarding the subject mentioned above.',
-    'For your convenience, a brief summary is also provided in the table below.',
-    'Thank you&mdash;and as always, ', 'Safety First! 👊'
+
+def delete_sheet(spreadsheet, name: str):
+    sheet = sheet_exists(spreadsheet, name)
+    if sheet:
+        spreadsheet.del_worksheet(sheet)
+        print(f"✅ Deleted sheet: {name}")
+    else:
+        print(f"❕ No sheet named '{name}' found.")
+
+
+def resolve_shtname(name: str) -> str:
+    return name.replace(",", "").replace(" ", "_")
+
+
+def make_json_safe(value: Any) -> Any:
+    """Convert any unsupported type (like datetime) to JSON-safe formats."""
+    if pd.isna(value):  # Handles NaN, NaT, None
+        return ""
+    if isinstance(value, (datetime, pd.Timestamp)):
+        return value.isoformat()
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    return value
+
+def df_to_json_safe(df: pd.DataFrame) -> list[list]:
+    """Convert DataFrame to a JSON-serializable list of lists."""
+    return [[make_json_safe(cell) for cell in row] for row in df.values.tolist()]
+    
+    
+    
+
+
+# === CONFIG ===
+SCRIPT_DIR = Path(__file__).resolve().parent
+WB_DIR = rslv_dir("assets/wb", SCRIPT_DIR)
+CREDS_DIR = rslv_dir("credentials")
+CREDS_JSON = CREDS_DIR / "credentials.json"
+SHEET_ID = '1nWiV3K5RFogHipKo_Kxbj9qqh8si2l79WFlal0i4ZaU'
+
+# === Locate latest valid XLSX ===
+XLSX_FILE: Optional[Path] = None
+for xlsx in sorted(WB_DIR.glob("*.xlsx"), key=lambda f: f.stat().st_mtime, reverse=True):
+    if is_report_date(xlsx.stem):
+        XLSX_FILE = xlsx
+        break
+
+if not XLSX_FILE:
+    raise FileNotFoundError("❌ No valid report XLSX file found in assets/wb")
+
+NEW_SHEET_NAME = resolve_shtname(XLSX_FILE.stem)
+
+# # === AUTH ===if
+# creds = Credentials.from_service_account_file(str(CREDS_JSON), scopes=SCOPES)
+# gc = gspread.authorize(creds)
+
+# === OPEN XLSX and convert ===
+# # df = pd.read_excel(XLSX_FILE, sheet_name=0)
+
+
+fmt = lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x
+df = pd.read_excel(
+    XLSX_FILE,
+    skiprows=58,
+    usecols="R:T",
+    nrows=9,
+    converters={
+        col: (
+            lambda x: f"{x:,.0f}"
+            if isinstance(x, (int, float))
+            else x
+        )
+        for col in range(3)
+    }
 )
 
-SUBJECT, HTML_BODY = get_html_content(EXCEL_FILE, MSGS)
+# df = pd.read_excel(
+    # XLSX_FILE,
+    # usecols="R:T",
+    # skiprows=58,
+    # header=None,
+    # nrows=9
+# )
 
-if HTML_BODY:
-    with open("index.html", "w", encoding="utf-8") as f:
-        f.write(HTML_BODY)
+print(df)
 
-print(SUBJECT)
 exit(0)
 
-class CONST:
-    SENSITIVE_KEYWORDS = [
-        'pass', 'password', 'passwd', 'pwd',
-        'token', 'secret', 'apikey', 'api_key',
-        'access', 'private', 'secure', 'auth',
-        'authentication', 'credentials', 'cred'
-    ]
+debug_path = SCRIPT_DIR / "debug_output.xlsx"
+df.to_excel(debug_path, index=False)
+print(f"Debug file saved to: {debug_path}")
 
-    def __init__(self, data):
-        if isinstance(data, str):
-            data = [data]
-        if isinstance(data, (list, tuple, set)):
-            data = {k: None for k in data}
+exit(0)
 
-        if not isinstance(data, dict):
-            raise TypeError(f"{self.__class__.__name__} - invalid input values:\n\n{data}")
-        
-        _data = {}
-        for key, val in data.items():
-            if 'alias' in key and isinstance(val, (list, tuple, set)):
-                for k, v in zip(val[::2], val[1::2]):
-                    self.SENSITIVE_KEYWORDS.append(k)
-                    _data[k] = data[v]
-            else:
-                _data[key] = val
-        
-        self._data = MappingProxyType(_data)
-        
-        keys = set(self._data.keys())
-        matches = set()
-        for keyword in set(self.SENSITIVE_KEYWORDS):
-            close = difflib.get_close_matches(keyword, keys, n=5, cutoff=0.69)
-            matches.update(close)
+# === OPEN SHEET ===
+spreadsheet = gc.open_by_key(SHEET_ID)
 
-        self._excluded = matches
-    
-    def __get_value(self, key):
-        try:
-            if isinstance(key, int):
-                values = [v for v in self._data.values()]
-                return values[min(max(key,0), len(values)-1)]
-            else:
-                return self._data[key]
-        except KeyError:
-            return None
-        
-    def __getattr__(self, key):
-        return self.__get_value(key)
+# Delete existing sheet if exists
+delete_sheet(spreadsheet, NEW_SHEET_NAME)
 
-    def __getitem__(self, key):
-        return self.__get_value(key)
-    
-    def __repr__(self):
-        if all(v is None for v in self._data.values()):
-            return ', '.join(filter(None, self._data.values()))
-        
-        lines = []
-        pad = lambda k: ' ' * (len(k) + 4)
-        exclude = set(self.__exclude())
-        
-        for k, v in self._data.items():
-            if k in exclude:
-                continue
-            val = '' if v is None else v.replace(', ', f"',\n{pad(k)}'")
-            lines.append(f"  {k}: '{val}',")
-        
-        return '{\n' + '\n'.join(lines).rstrip(',') + '\n}'
-
-    def __contains__(self, key):
-        return key in self._data
-
-    def __iter__(self):
-        return iter(self._data)
-        
-    def __exclude(self, exclude=None):
-        excluded = set(self._excluded)  # make a copy to avoid mutation
-
-        if isinstance(exclude, str):
-            excluded.add(exclude)
-        elif isinstance(exclude, (list, tuple, set)):
-            excluded.update(exclude)
-        elif exclude is not None:
-            raise TypeError("'exclude' must be a string, list, tuple, set, or None")
-
-        return excluded
-    
-    def __retrieve(self, pair=True, keys=None, exclude=None):
-        keys = [keys] if isinstance(keys, str) else list(keys) if isinstance(keys, (list, tuple, set)) else [k for k in self._data if k not in self.__exclude(exclude)]
-        return [(k, v) if pair else v for k, v in self._data.items() if k in keys]
-    
-    def as_dict(self):
-        return dict(self._data)
-
-    def keys(self, exclude=None):
-        return [k for k in self._data if k not in self.__exclude(exclude)]
-
-    def values(self, keys=None, exclude=None):
-        return self.__retrieve(False, keys, exclude)
-
-    def items(self, keys=None, exclude=None):
-        return self.__retrieve(True, keys, exclude)
-
-    def get(self, key, default=None):
-        search = str(default).strip() if default else None
-
-        if search in self._data.values():
-            default_val = search
-        else:
-            default_val = None
-            for k in (search, 'default', next(iter(self._data), None)):
-                if k in self._data:
-                    default_val = self._data[k]
-                    break
-
-        return self._data.get(str(key).strip(), default_val)
-
-SUFFXS = CONST({
-    'hcc': 'com.ph',
-    'default': 'com'
-})
-
-PROVIDERS = tuple(
-    f"{S}.{SUFFXS.get(S)}"
-    for S in ('hcc', 'gmail', 'yahoo', 'outlook',
-        'icloud', 'protonmail', 'mail', 'yandex')
+# Create new sheet
+worksheet = spreadsheet.add_worksheet(
+    title=NEW_SHEET_NAME,
+    rows=str(len(df) + 1),
+    cols=str(len(df.columns))
 )
 
-PORT, SERVER = 587, f"smtp.{PROVIDERS[1]}"
+# Headers + cleaned rows
+values = [df.columns.tolist()] + df_to_json_safe(df)
 
-def eaddrs(S=None, T=0, PS=PROVIDERS):
-    """
-    Builds a properly formatted email address from a string name and provider index.
-    Returns:
-        The cleaned email string if valid, None otherwise.
-    """
-    if not isinstance(S, str):
-        return None
-    T = 0 if not isinstance(T, int) or not (0 <= T < len(PS)) else T
-    S, P = f"{S}@{PS[T]}", r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
-    return S if re.match(P, S) else None
+worksheet.update(range_name="A1", values=values)
 
-def estr(S=None, T=0):
-    """
-    Returns a properly formatted email string:
-    - If list: join with commas
-    - If email-like string: return as-is
-    - If name string: convert to email via eaddrs()
-    - Else: return None
-    """
-    if isinstance(S, list):
-        return ', '.join(estr(item, T) for item in S if estr(item, T))
-    elif isinstance(S, str):
-        return S if '@' in S else eaddrs(S, T)
-    return None
-    
-# --- CONFIGURATION ---
-CFG = CONST({
-    "subject": SUBJECT,
-    "from": estr('zeenoliev',1),
-    "password": "frmoyroohmevbgvb",
-    "alias": ["sender", "from"],
-    "to": estr(['yawapisting7','cimaciojay0'],1),
-    "cc": estr(['rayajcimacio','rayajcimacio2'],1)
-})
-
-# --- BUILD EMAIL ---
-msg = EmailMessage()
-for k, v in CFG.items():
-    msg[k.title()] = v
-msg.set_content('\n'.join([msg.replace('&apos;', '—') for msg in MSGS]))
-msg.add_alternative(HTML_BODY, subtype='html')
-
-# --- ADD EXCEL_FILE ---
-mime_type, _ = guess_type(EXCEL_FILE)
-maintype, subtype = mime_type.split('/') if mime_type else ('application', 'octet-stream')
-
-with open(EXCEL_FILE, 'rb') as f:
-    file_data = f.read()
-    file_name = os.path.basename(EXCEL_FILE)
-    msg.add_attachment(file_data, maintype=maintype, subtype=subtype, filename=file_name)
-
-# --- SEND EMAIL ---
-try:
-    with smtplib.SMTP(SERVER, PORT) as smtp:
-        smtp.starttls()
-        smtp.login(CFG.sender, CFG.password)
-        smtp.send_message(msg)
-        print("Email sent successfully.")
-    
-except Exception as e:
-    print(f"Error sending email: {e}")
+# Optional: Delete default "Sheet1" if still exists
+delete_sheet(spreadsheet, "Sheet1")

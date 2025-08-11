@@ -1,140 +1,72 @@
-# import json
-# img_url = "https://raw.githubusercontent.com/MasterZeeno/SSR/refs/heads/main/AUTO_SSR/assets/imgs/"
-# data = {
-    # "Subject": "Updated: Safety Statistics Report (SSR)",
-    # "Headers": {
-        # "Reference No.": "",
-        # "Report Period": "",
-        # "Project Name": "Construction of the New Senate Building (Phase II)",
-        # "Project Site": "Navy Village, Fort Bonifacio, Taguig City",
-        # "Project Code": "PE-01-NSBP2-23"
-    # },
-    # "Message Body": [
-        # "Greetings! ✨",
-        # "You may download the updated Excel file using the button above or from the attached copy.",
-        # "For your quick reference, a summary of the safety statistics is provided below:",
-        # "Thank you—and as always, Safety First! 👊"
-    # ],
-    # "Summary": {
-        # "Description": [
-            # "Loss Time Injury",
-            # "Restricted Work Case",
-            # "First Aid Treatment Case",
-            # "Medical Treatment Case",
-            # "Fire Incident Case",
-            # "Near Miss Incident",
-            # "Property Damage Case",
-            # "Highest Manpower",
-            # "Cumulative Manhours"
-        # ],
-        # "Previous": [],
-        # "This Period": [],
-        # "Present": []
-    # },
-    # "Disclaimer:": [
-        # "This is an automated message. Please do not reply directly to this email.",
-        # "This email, including any attachments and previous correspondence in the thread, is confidential and intended solely for the designated recipient(s). If you are not the intended recipient, you are hereby notified that any review, dissemination, distribution, printing, or copying of this message and its contents is strictly prohibited. If you have received this email in error or have unauthorized access to it, please notify the sender immediately and permanently delete all copies from your system.",
-        # "The sender and the organization shall not be held liable for any unintended transmission of confidential or privileged information."
-    # ],
-    # "Bold Texts": [
-        # "Greetings!",
-        # "Safety First!",
-        # "Disclaimer:",
-        # "automated message",
-        # "confidential",
-        # "permanently delete all copies"
-    # ],
-    # "Colors": {
-        # "fg": [
-            # "#002445",
-            # "#0a66c2",
-            # "#60607b"
-        # ],
-        # "bg": [
-            # "#f5faff",
-            # "#f3f2f0"
-        # ]
-    # },
-    # "zee": {
-        # "img": {
-            # "src": img_url + "zee.png",
-            # "href": "https://linkedin/in/masterzeeno/",
-            # "size": 64,
-            # "border-radius": "100%"
-        # },
-        # "content": [
-            # {
-                # "value": "Jay Ar Adlaon Cimacio",
-                # "color": 1,
-                # "font-size": 16
-            # },
-            # {
-                # "value": "Occupational Health Nurse",
-                # "color": 0,
-                # "font-size": 14
-            # },
-            # {
-                # "value": "License No.: 0847170",
-                # "color": 2,
-                # "font-size": 12
-            # }
-        # ]
-    # },
-    # "hcc": {
-        # "img": {
-            # "src": img_url + "hcc.png",
-            # "href": "https://hcc.com.ph/",
-            # "size": 32,
-            # "border-radius": 0
-        # },
-        # "content": [
-            # {
-                # "value": "Hilmarc's Construction Corporation",
-                # "color": 0,
-                # "font-size": 16
-            # },
-            # {
-                # "value": "1835 E. Rodriguez Sr. Ave., Immaculate Conception, Quezon City",
-                # "color": 2,
-                # "font-size": 9
-            # }
-        # ]
-    # },
-    # "Footer": [
-        # {
-            # "value": "ISO 9001:2015 Certified | PCAB License No. 3886 AAA",
-            # "color": 2,
-            # "font-size": 10
-        # },
-        # {
-            # "value": "© 1977-%year%. All rights reserved.",
-            # "color": 2,
-            # "font-size": 10
-        # }
-    # ],
-    # "Reported": [
-        # "Jul 28-Aug 3,2025"
-    # ]
-# }
-
-# with open("assets/data.json", "w", encoding="utf-8") as f:
-    # json.dump(data, f, indent=4)
-
+import os
+import re
+import smtplib
+import sys
 from pathlib import Path
+from datetime import datetime, date
+from mimetypes import guess_type
+from email.utils import formataddr
+from openpyxl import load_workbook, Workbook
+from email.message import EmailMessage
+from calendar import month_name, month_abbr
 from urllib.parse import urlparse, urlunparse, quote, parse_qsl, urlencode
-from typing import Optional, Union
+from typing import Optional, Union, Dict
 
+# --- CONSTANTS ---
+SCRIPT_DIR = Path(__file__).resolve().parent
+
+OPERATION: str = sys.argv[1] if len(sys.argv) > 1 else ""
+
+MONTH_MAP: Dict[str, str] = {
+    full: abbr for full, abbr in zip(month_name[1:], month_abbr[1:])
+}
+
+DATE_REGEX: str = r'\b(' + '|'.join(
+    sorted(map(re.escape, MONTH_MAP), key=len, reverse=True)
+) + r')\b'
+
+# --- FUNCTIONS WITH TYPING ---
+
+def fmt_date(date_string: str) -> str:
+    return re.sub(
+        DATE_REGEX,
+        lambda m: MONTH_MAP[m.group(0)],
+        date_string
+    )
+
+def extract_end_date(date_string: str) -> Optional[date]:
+    date_string = date_string.strip()
+    match = re.search(
+        r'(?:\w+\s+\d{1,2}-)?(\w+)\s+(\d{1,2}),?\s*(\d{4})',
+        date_string, flags=re.IGNORECASE
+    )
+    if not match:
+        return None
+
+    month, day, year = match.groups()
+    for fmt in ("%B %d %Y", "%b %d %Y"):
+        try:
+            return datetime.strptime(f"{month} {day} {year}", fmt).date()
+        except ValueError:
+            continue
+    return None
+
+def is_report_date(date_string: str) -> bool:
+    end_date = extract_end_date(date_string)
+    return (
+        False if end_date is None else
+        end_date <= datetime.today().date()
+    )
 
 def rslv_dir(dirname: Union[str, Path], parentdir: Optional[Union[str, Path]] = None) -> Path:
-    base = Path(parentdir) if parentdir else Path.cwd()
-    directory = (base / dirname).resolve()
+    base: Path = Path(parentdir) if parentdir else Path.cwd()
+    directory: Path = (base / dirname).resolve()
     directory.mkdir(parents=True, exist_ok=True)
     return directory
 
 def rel_to(filepath: Union[str, Path], basepath: Optional[Union[str, Path]] = None) -> str:
     filepath = Path(filepath).resolve()
     basepath = Path(basepath).resolve() if basepath else Path.cwd()
-
     try:
         return str(filepath.relative_to(basepath))
     except ValueError:
@@ -142,11 +74,8 @@ def rel_to(filepath: Union[str, Path], basepath: Optional[Union[str, Path]] = No
 
 def urlify(url: Union[str, bytes]) -> str:
     parsed = urlparse(url)
-    
-    # Encode path and query
     encoded_path = quote(parsed.path, safe="")  # encode everything including slashes
     encoded_query = urlencode(parse_qsl(parsed.query), doseq=True)
-    
     return urlunparse((
         parsed.scheme,
         parsed.netloc,
@@ -155,28 +84,143 @@ def urlify(url: Union[str, bytes]) -> str:
         encoded_query,
         parsed.fragment
     ))
-    
-# base_url = "https://raw.githubusercontent.com/MasterZeeno/SSR/refs/heads/main/"
-# url_yawa = f"{Path(__file__).parent.name}/assets/imgs/zee.png"
-# "https://raw.githubusercontent.com/MasterZeeno/SSR/refs/heads/main/AUTO_SSR/assets/wb/August 4-10, 2025.xlsx"
-# "https://raw.githubusercontent.com/MasterZeeno/SSR/refs/heads/main/AUTO_SSR%2Fassets%2Fwb%2FAugust 4-10%2C 2025.xlsx"
-# print(urlify("AUTO_SSR/assets/imgs"))
-# Example usage
-# 
 
-SCRIPT_DIR = Path(__file__).resolve().parent
+def minify(text: str) -> str:
+    text = re.sub(r'\n+', '', text.strip())
+    text = re.sub(r'\s+', ' ', text)
+    return re.sub(r'>\s+<', '><', text)
+
+def send_email(subject: str, html_body: str, excel_file: Union[str, Path]) -> None:
+    ZEE = (
+        "Jay Ar Adlaon Cimacio, RN",
+        "zeenoliev@gmail.com"
+    )
+
+    CFG: Dict[str, str] = {
+        "Subject": subject,
+        "From": formataddr(ZEE)
+    }
+
+    if "force" in OPERATION.lower():
+        to_list = [
+            f"jojofundales@{e}.com" +
+            (".ph" if e == "hcc" else "")
+            for e in ["hcc", "yahoo"]
+        ]
+
+        cc_yahoo = [f"{user}@yahoo.com" for user in [
+            "arch_rbporral", "glachel.arao", "rbzden"
+        ]]
+
+        cc_gmail = [f"{user}@gmail.com" for user in [
+            "maravilladarwin87.dm", "aljonporcalla",
+            "eduardo111680"
+        ]]
+
+        CFG.update({
+            "To": ", ".join(to_list),
+            "Cc": ", ".join(cc_yahoo + cc_gmail)
+        })
+    else:
+        CFG.update({
+            "To": "cimaciojay0@gmail.com",
+            "Cc": "yawapisting7@gmail.com"
+        })
+
+    msg = EmailMessage()
+    for k, v in CFG.items():
+        msg[k] = v
+
+    msg.set_content("Greetings! ✨\n\nPlease see the attached file regarding the subject mentioned above.")
+    msg.add_alternative(html_body, subtype="html")
+
+    mime_type, _ = guess_type(str(excel_file))
+    maintype, subtype = mime_type.split("/") if mime_type else ("application", "octet-stream")
+
+    with open(excel_file, 'rb') as f:
+        file_data = f.read()
+        file_name = os.path.basename(excel_file)
+        msg.add_attachment(
+            file_data,
+            maintype=maintype,
+            subtype=subtype,
+            filename=file_name
+        )
+
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
+            smtp.starttls()
+            smtp.login(ZEE[1], "frmoyroohmevbgvb")
+            smtp.send_message(msg)
+            print("Email sent successfully.")
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        
+        
+        
+        
 IMGS_DIR, WB_DIR = [
     rslv_dir(f"assets/{v}", SCRIPT_DIR)
     for v in ["imgs", "wb"]
 ]
 
-data = {
-    f"{p.name}_dir": rel_to(p, SCRIPT_DIR.parent)
-    for p in [IMGS_DIR, WB_DIR]
-}
+for excel_file in sorted(
+    WB_DIR.glob('*.xlsx'),
+    key=lambda f: f.stat().st_mtime, reverse=True
+):
+    if is_report_date(excel_file.stem):
+        WB_PATH = excel_file
+        break
+
+if WB_PATH:
+    wb = load_workbook(WB_PATH, read_only=True, data_only=True)
+    ws = [s for s in wb.worksheets if s.sheet_state == "visible"][-1]
+    
+    raw_data = {
+        **{
+            f"{p.name}_dir": urlify(r)
+            for p in [IMGS_DIR, WB_DIR]
+            if (r := rel_to(p, SCRIPT_DIR.parent))
+        },
+        "excel_file": urlify(WB_PATH.name),
+        "year_now": str(datetime.now().year),
+        "reference_no": str(ws.cell(61, 2).value).split()[-1],
+        "report_period": fmt_date(str(ws.cell(63, 4).value))
+    }
+    
+    for r in range(59, 68):
+        for c in range(18, 21):
+            val = ws.cell(r, c).value
+            if val is not None:
+                key = f"{r-59}:{c-18}"
+                raw_data[key] = f"{val:,.0f}" if isinstance(val, (int, float)) else val
+    
+    data = {
+        f"{{{{ {k} }}}}": v
+        for k, v in raw_data.items()
+    }
+    
+    subject = " ".join([
+        "Update:", "PE-01-NSBP2-23",
+        "Safety Statistics Report",
+        "as of", raw_data["report_period"]
+    ])
+    
+    template_path = Path("template.html").resolve()
+    
+    if template_path.exists() and data:
+        html_content = template_path.read_text(encoding="utf-8")
+        
+        for k, v in data.items():
+            html_content = html_content.replace(k, v)
+        
+        html_content = minify(html_content)
+        send_email(subject, html_content, WB_PATH)
+        with open(Path("index.html").resolve(), "w", encoding="utf-8") as f:
+            f.write(html_content)
 
 
-print(data)
+
 
 
 
