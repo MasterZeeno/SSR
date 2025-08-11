@@ -51,11 +51,14 @@ def extract_end_date(date_string: str) -> Optional[date]:
             continue
     return None
 
-def is_report_date(date_string: str) -> bool:
+def is_report_date(date_string: str, today=None) -> bool:
+    if today is None:
+        today = datetime.today().date()
+        
     end_date = extract_end_date(date_string)
     return (
         False if end_date is None else
-        end_date <= datetime.today().date()
+        end_date <= today
     )
 
 def rslv_dir(dirname: Union[str, Path], parentdir: Optional[Union[str, Path]] = None) -> Path:
@@ -164,15 +167,19 @@ IMGS_DIR, WB_DIR = [
     for v in ["imgs", "wb"]
 ]
 
+TODAY = datetime.today().date()
+print(TODAY)
+
 for excel_file in sorted(
     WB_DIR.glob('*.xlsx'),
     key=lambda f: f.stat().st_mtime, reverse=True
 ):
-    if is_report_date(excel_file.stem):
+    if is_report_date(excel_file.stem, TODAY):
         WB_PATH = excel_file
         break
 
 if WB_PATH:
+    print(WB_PATH)
     wb = load_workbook(WB_PATH, read_only=True, data_only=True)
     ws = [s for s in wb.worksheets if s.sheet_state == "visible"][-1]
     
