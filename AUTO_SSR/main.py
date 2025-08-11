@@ -83,7 +83,7 @@ def is_report_date(date_string: str, today=None) -> bool:
     dates = extract_dates(date_string)
     return (
         False if dates is None else
-        dates.start[0].date <= today <= dates.end[0].date
+        dates.end[0].date <= today
     )
 
 def rslv_dir(dirname: Union[str, Path], parentdir: Optional[Union[str, Path]] = None) -> Path:
@@ -197,8 +197,9 @@ TODAY = datetime.today().date()
 
 for excel_file in sorted(
     WB_DIR.glob('*.xlsx'),
-    key=lambda f: f.stat().st_mtime, reverse=True
-):
+    key=lambda f: extract_dates(f.stem).end[0].date,
+    reverse=True
+):  
     if is_report_date(excel_file.stem, TODAY):
         WB_PATH = excel_file
         break

@@ -197,8 +197,9 @@ TODAY = datetime.today().date()
 
 for excel_file in sorted(
     WB_DIR.glob('*.xlsx'),
-    key=lambda f: f.stat().st_mtime, reverse=True
-):
+    key=lambda f: extract_dates(f.stem).end[0].date,
+    reverse=True
+):  
     if is_report_date(excel_file.stem, TODAY):
         WB_PATH = excel_file
         break
