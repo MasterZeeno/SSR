@@ -18,7 +18,7 @@ jobs:
         shell: bash
 
     env:
-      COMMIT_MSG: ${{ github.event_name == 'schedule' && 'Force send email' || github.event.head_commit.message || '' }}
+      COMMIT_MSG: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'Force send email' || (github.event.head_commit.message || '') }}
 
     steps:
       - name: Checkout main branch
