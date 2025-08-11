@@ -83,7 +83,7 @@ def is_report_date(date_string: str, today=None) -> bool:
     dates = extract_dates(date_string)
     return (
         False if dates is None else
-        dates.end[0].date <= today
+        dates.start[0].date <= today <= dates.end[0].date
     )
 
 def rslv_dir(dirname: Union[str, Path], parentdir: Optional[Union[str, Path]] = None) -> Path:
