@@ -11,6 +11,7 @@ from email.message import EmailMessage
 from calendar import month_name, month_abbr
 from urllib.parse import urlparse, urlunparse, quote, parse_qsl, urlencode
 from typing import Optional, Union, Dict
+from types import SimpleNamespace
 
 # --- CONSTANTS ---
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -25,6 +26,12 @@ DATE_REGEX: str = r'\b(' + '|'.join(
     sorted(map(re.escape, MONTH_MAP), key=len, reverse=True)
 ) + r')\b'
 
+DATE_RE = re.compile(
+    (r"(\w+)\s+(\d{1,2})\s*-\s*(?:" +
+    r"(\w+)\s+)?(\d{1,2}),?\s*(\d{4})"),
+    flags=re.IGNORECASE
+)
+
 # --- FUNCTIONS WITH TYPING ---
 
 def fmt_date(date_string: str) -> str:
@@ -34,31 +41,49 @@ def fmt_date(date_string: str) -> str:
         date_string
     )
 
-def extract_end_date(date_string: str) -> Optional[date]:
-    date_string = date_string.strip()
-    match = re.search(
-        r'(?:\w+\s+\d{1,2}-)?(\w+)\s+(\d{1,2}),?\s*(\d{4})',
-        date_string, flags=re.IGNORECASE
-    )
+def extract_dates(date_string):
+    if not date_string or not date_string.strip():
+        return None
+    
+    def parse(m, d, y):
+        for fmt in (fmts := ("%B %d %Y", "%b %d %Y")):
+            try:
+                return SimpleNamespace(**{
+                    "date": (dt := datetime.strptime(f"{m} {d} {y}", fmt).date()),
+                    "string": SimpleNamespace(**{
+                        k: quote(d) if "q" in k else d
+                        for k, v in zip(
+                            ["short", "full", "quoted"],
+                            [f"{dt:%b}", [f"{dt:%B}"]*2]
+                        )
+                        if (d := f"{v} {dt.day}, {dt:%Y}")
+                    })
+                })
+            except ValueError:
+                continue
+        return None
+    
+    match = DATE_RE.search(date_string).groups()
+    
     if not match:
         return None
-
-    month, day, year = match.groups()
-    for fmt in ("%B %d %Y", "%b %d %Y"):
-        try:
-            return datetime.strptime(f"{month} {day} {year}", fmt).date()
-        except ValueError:
-            continue
-    return None
+    
+    return SimpleNamespace(**{
+        key: [
+            parse((m if m else match[0]), d, match[-1])
+            for m, d in zip(match[::2], match[1::2])
+        ]
+        for key in ["start", "end"]
+    })
 
 def is_report_date(date_string: str, today=None) -> bool:
     if today is None:
         today = datetime.today().date()
         
-    end_date = extract_end_date(date_string)
+    dates = extract_dates(date_string)
     return (
-        False if end_date is None else
-        end_date <= today
+        False if dates is None else
+        dates.end[0].date <= today
     )
 
 def rslv_dir(dirname: Union[str, Path], parentdir: Optional[Union[str, Path]] = None) -> Path:
@@ -167,8 +192,8 @@ IMGS_DIR, WB_DIR = [
     for v in ["imgs", "wb"]
 ]
 
+WB_PATH = None
 TODAY = datetime.today().date()
-print(TODAY)
 
 for excel_file in sorted(
     WB_DIR.glob('*.xlsx'),
@@ -179,7 +204,6 @@ for excel_file in sorted(
         break
 
 if WB_PATH:
-    print(WB_PATH)
     wb = load_workbook(WB_PATH, read_only=True, data_only=True)
     ws = [s for s in wb.worksheets if s.sheet_state == "visible"][-1]
     
