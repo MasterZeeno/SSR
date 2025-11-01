@@ -41,4 +41,4 @@ jobs:
 
       - name: Auto-commit changes (if any)
         if: ${{ !startsWith(env.COMMIT_AUTHOR, 'github-actions') }}
-        uses: stefanzweifel/git-auto-commit-action@v6.0.1
+        uses: stefanzweifel/git-auto-commit-action@v7
